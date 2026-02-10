@@ -1,0 +1,11 @@
+What Could Actually Improve Results?
+Larger chunks for court opinions (1,500–2,000) — Legal reasoning spans multiple paragraphs. Our 0.50–0.60 scores on court opinions could potentially reach 0.65+ with bigger chunks that keep the full argument together.
+Smaller chunks for WAC/RCW definitions (500–700) — Individual regulatory definitions are often very short. A 1,000-char chunk may merge two unrelated definitions.
+Per-library chunk sizes — The ideal approach would be different settings per library:
+Governor Orders, DIR Rules: 1,000 (works well as-is)
+RCW/WAC/SMC sections: 700–800 (shorter, more precise)
+Court Opinions: 1,500–2,000 (longer, preserves reasoning chains)
+IBC/SPU: 1,000–1,200 (tables/specs need moderate context)
+Parent-child chunking — Store smaller chunks for retrieval (500 chars) but return the parent chunk (2,000 chars) as context. Best of both worlds, but more complex.
+Bottom Line
+Our 1,000/200 parameters are delivering strong results (all 40 queries hit correct documents, scores 0.46–0.76). The biggest gains would come from per-library tuning — but that adds complexity and would require re-embedding those libraries.

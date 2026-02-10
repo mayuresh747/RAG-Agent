@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project Specific
+data/
+*.log
+*.sqlite3
+.DS_Store
+All Documents/
+
+# IDEs
+.vscode/
+.idea/
