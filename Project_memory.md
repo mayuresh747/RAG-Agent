@@ -1,7 +1,7 @@
 # Project Memory — RAG Agent
 
 > This file serves as the persistent memory of all decisions, strategies, and results for the RAG Agent project.
-> Last updated: **2026-02-10**
+> Last updated: **2026-02-11**
 
 ---
 
@@ -393,7 +393,23 @@ Frontend CDN: `marked.js` (markdown rendering), Google Fonts (Inter)
 - [x] **FastAPI backend** — SSE streaming chat, settings, and history endpoints ✓
 - [x] **Chat UI** — custom dark glassmorphism interface with editable system instructions ✓
 - [x] **Phase 7 Enhancements** — max tokens (8192), temperature slider, expanded source text, new system prompt ✓
+- [x] **Session Logging** — JSONL logs for sessions and retrievals ✓
+- [x] **Source Count Fix** — Consistent retrieval of 25 sources regardless of library routing ✓
 - [ ] **OCR integration** — capture text from scanned image PDFs
 - [ ] **Automated tests** — unit tests for all core modules
 - [ ] **Persistent chat history** — save conversations across server restarts
 - [ ] **Deployment** — containerization and hosting strategy
+
+---
+
+## 16. Recent Improvements (2026-02-11)
+
+### Session Logging
+Added structured JSONL logging to `logs/` directory:
+- `sessions.jsonl`: Tracks session ID, user query, assistant response, token usage, latency, and source count.
+- `retrievals.jsonl`: Logs detailed metadata for every retrieved chunk (source file, library, score, page number) linked to the session ID.
+
+### Source Count Consistency Fix
+Resolved an issue where queries routing to a single library returned only 10 sources (default `per_library_k`) while multi-library queries returned 25.
+- **Fix**: Increased `per_library_k` default to 25 in `src/core/retriever.py`.
+- **Outcome**: Consistent 25 sources returned for all queries if requested.

@@ -92,8 +92,10 @@ RAG Agent/
 │   │   ├── chunker.py      # Legal-text-aware text chunking
 │   │   ├── embedder.py     # OpenAI embedding wrapper
 │   │   ├── vector_store.py # ChromaDB operations
-│   │   └── ingest.py       # Ingestion orchestrator
-│   └── app/                # (Coming soon) FastAPI + Streamlit UI
+│   │   ├── ingest.py       # Ingestion orchestrator
+│   └── app/
+│       ├── main.py         # FastAPI server
+│       └── static/         # Frontend assets (HTML, CSS, JS)
 ├── tests/                  # Unit & integration tests
 ├── .env.example            # Environment variable template
 ├── requirements.txt        # Python dependencies
@@ -110,12 +112,18 @@ RAG Agent/
 | Chunk Overlap | 200 characters |
 | Embedding Batch Size | 500 chunks/request |
 | Vector Store | ChromaDB (cosine similarity) |
-| LLM (planned) | `gpt-4o-mini` |
+| LLM | `gpt-5.1` |
 
 ## Next Steps
 
-- [ ] Multi-collection retrieval engine with re-ranking
-- [ ] RAG chain with GPT-4o-mini + conversation memory
-- [ ] FastAPI REST API endpoints
-- [ ] Streamlit chat interface
+- [x] Multi-collection retrieval engine with re-ranking
+- [x] RAG chain with GPT-5.1 + conversation memory
+- [x] FastAPI REST API endpoints
+- [x] Web Chat Interface (Glassmorphism UI)
 - [ ] OCR for scanned image PDFs (37 files skipped)
+
+## Logging
+
+The application logs key events to JSONL files in the `logs/` directory:
+- `logs/sessions.jsonl`: Tracks chat sessions, including tokens usage, duration, and user queries.
+- `logs/retrievals.jsonl`: Detailed breakdown of retrieved documents for each query.
