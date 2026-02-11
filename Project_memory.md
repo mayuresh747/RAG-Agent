@@ -236,7 +236,91 @@ Legal text typically scores lower than conversational text due to its formal, do
 
 ---
 
-## 9. Architecture Decisions
+## 9. Retrieval Engine (Phase 5)
+
+Built in `src/core/retriever.py`. Provides multi-collection semantic search with intelligent routing.
+
+### Features
+| Feature | Description |
+|---|---|
+| Multi-collection search | Queries one or more of the 8 ChromaDB collections and merges results |
+| Keyword auto-routing | ~180 regex patterns detect relevant libraries from query text (e.g., "DUI" → RCW only) |
+| Metadata filtering | ChromaDB `where` filters by library, source file, page, etc. |
+| Cross-collection re-ranking | All candidates sorted by cosine similarity regardless of source collection |
+| Deduplication | Same source + page doesn't repeat in results |
+| LLM context formatting | `retrieve_with_context()` produces citation-annotated text blocks for LLM prompts |
+
+### Auto-Routing Keyword Coverage
+| Library | Example Keywords |
+|---|---|
+| RCW Chapters (~50 patterns) | RCW, homicide, assault, DUI, divorce, child custody, landlord, eviction, foreclosure, cannabis, probate, consumer protection |
+| WAC Chapters (~50 patterns) | WAC, Ecology, groundwater, DOH, immunization, DSHS, nursing home, L&I, OSHA, teacher certification, property tax, hunting, pesticide |
+| SMC Chapters (~25 patterns) | SMC, seattle zoning, seattle noise, FAR, height limit, seattle tree, seattle harbor |
+| IBC WA Docs (~25 patterns) | IBC, IFC, IRC, IMC, IECC, fire sprinkler, egress, seismic, HVAC, ADA, occupant load |
+| SPU Design Standards (~20 patterns) | SPU, pump station, cathodic, SCADA, water main, combined sewer, CSO, switchgear |
+| Seattle DIR Rules (~25 patterns) | DIR, SDCI, RRIO, streetscape, green factor, tree protection, shotcrete, Master Use Permit |
+| WA Governor Orders (~15 patterns) | executive order, governor, immigrant, tribal nation, FAFSA, clean energy, project labor |
+| Court Opinions (~20 patterns) | court opinion, supreme court, plaintiff, defendant, summary judgment, certiorari, remand, dissent |
+
+### Retriever Verification (6 test queries)
+| Query | Auto-Routed To | Top Result | Score |
+|---|---|---|---|
+| "child custody rules in divorce" | RCW only | `RCW_26.27_Child_Custody.pdf` | 0.48 |
+| "nursing home patient abuse reporting" | WAC only | `WAC_388-97_Nursing_homes.pdf` | 0.63 |
+| "fire sprinkler requirements high rise" | IBC only | `IBC International Fire Code.pdf` | 0.60 |
+| "SCADA pump station electrical design" | WAC + SPU | `SPU 11PumpStations.pdf` | 0.66 |
+| "RRIO rental tenant relocation assistance" | RCW + DIR | `DIR 16-2020 Tenant Relocation.pdf` | 0.55 |
+| "State v. Bell defendant appeal" | Court Opinions only | `State v. Bell.pdf` | **0.77** |
+
+---
+
+## 10. Chat Interface & LLM Integration (Phase 6)
+
+Built a full-stack RAG chat application with GPT 5.1 streaming and a custom dark-theme UI.
+
+### RAG Chain (`src/core/rag_chain.py`)
+| Feature | Detail |
+|---|---|
+| LLM model | OpenAI `gpt-5.1` |
+| Streaming | Token-by-token via Python generator → SSE events |
+| Context injection | Retriever results formatted as numbered `[Source N]` blocks |
+| Conversation memory | Last 20 messages (configurable via `CONVERSATION_MEMORY_SIZE`) |
+| System prompt | Customizable per session; defaults to WA legal research assistant |
+| Error handling | Retrieval failures and LLM API errors yield typed error events |
+
+### FastAPI Backend (`src/app/main.py`)
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/chat` | POST | SSE streaming chat (sources + tokens + done/error events) |
+| `/api/settings` | GET/PUT | Read/update system instruction |
+| `/api/chat/history` | DELETE | Clear conversation memory |
+| `/` | GET | Serve chat UI (static files) |
+
+### Chat UI (`src/app/static/`)
+| File | Purpose |
+|---|---|
+| `index.html` | Page structure — header, sidebar, chat area, input |
+| `style.css` | Dark glassmorphism theme with custom CSS properties, animations, responsive layout |
+| `app.js` | SSE streaming client, markdown rendering (via `marked.js`), sidebar logic, source display |
+
+### UI Features
+- Dark-mode glassmorphism design with Inter font and accent colors
+- Example query buttons on welcome screen
+- Auto-resizing message input
+- Expandable source badges showing library, file, page, and relevance score
+- Slide-out sidebar for editing/resetting the system instruction
+- Clear chat button with history reset
+- Typing indicator animation during streaming
+- Responsive layout for mobile/desktop
+
+### GPT 5.1 API Notes
+- Uses `max_completion_tokens` (not `max_tokens`) — required by the GPT 5.1 model family
+- Default temperature: 0.1 (low for factual legal responses)
+- Default max tokens: 2048
+
+---
+
+## 11. Architecture Decisions
 
 | Decision | Choice | Why |
 |---|---|---|
@@ -247,51 +331,68 @@ Legal text typically scores lower than conversational text due to its formal, do
 | Collection strategy | One per library | Isolation, targeted search, independent updates |
 | Chunk ID | MD5 hash of `library::filename::chunk_index` | Deterministic — re-runs upsert, no duplicates |
 | Ingestion order | Smallest → largest library | Fail fast on small data before committing to large batches |
+| Retrieval routing | Keyword auto-routing (~180 patterns) | Narrows search from 400K chunks to relevant collections |
+| Re-ranking | Score-based cross-collection merge | Best results float to top regardless of source library |
+| LLM model | GPT 5.1 | Latest model, best quality for legal Q&A |
+| Chat UI framework | Custom HTML/CSS/JS | Maximum design control for glassmorphism, sidebar, and streaming UX |
+| Streaming protocol | Server-Sent Events (SSE) | Simple, native browser support, no WebSocket complexity |
+| Backend framework | FastAPI | Async support, automatic OpenAPI docs, SSE-friendly |
 
 ---
 
-## 10. Core Modules
+## 12. Core Modules
 
 | Module | Purpose |
 |---|---|
-| `src/core/config.py` | Central configuration, library mappings, model settings |
+| `src/core/config.py` | Central configuration, library mappings, model settings, default system prompt |
 | `src/core/pdf_loader.py` | PDF text extraction with per-page metadata |
 | `src/core/chunker.py` | Legal-text-aware recursive text chunking |
 | `src/core/embedder.py` | OpenAI embedding API wrapper with batching |
 | `src/core/vector_store.py` | ChromaDB collection management, upsert, search |
 | `src/core/ingest.py` | Ingestion orchestrator (load → chunk → embed → store) |
+| `src/core/retriever.py` | Multi-collection retrieval with auto-routing, re-ranking, dedup |
+| `src/core/rag_chain.py` | GPT 5.1 RAG chain with streaming, context injection, conversation memory |
+| `src/app/main.py` | FastAPI server — SSE chat, settings, history endpoints, static file serving |
+| `src/app/static/` | Chat UI — HTML, CSS (glassmorphism), JavaScript (SSE client, markdown) |
 
 | Script | Purpose |
 |---|---|
 | `scripts/run_ingest.py` | CLI for running ingestion per library or all |
-| `scripts/test_library.py` | CLI for testing search against a collection |
+| `scripts/run_chat.py` | CLI to start the FastAPI chat server (`python scripts/run_chat.py`) |
+| `scripts/test_library.py` | CLI for testing search against a single collection |
+| `scripts/test_retriever.py` | CLI for testing multi-collection retrieval with auto-routing |
 | `scripts/estimate_tokens.py` | Estimate token counts and embedding costs |
 
 ---
 
-## 11. Dependencies
+## 13. Dependencies
 
 ```
 fastapi, uvicorn, python-dotenv, langchain, langchain-community, langchain-openai,
-chromadb, sentence-transformers, requests, pydantic, pytest, PyMuPDF, streamlit,
-tiktoken, tqdm, openai
+chromadb, sentence-transformers, requests, pydantic, pytest, PyMuPDF,
+tiktoken, tqdm, openai, sse-starlette
 ```
+
+Frontend CDN: `marked.js` (markdown rendering), Google Fonts (Inter)
 
 ---
 
-## 12. Known Issues & Limitations
+## 14. Known Issues & Limitations
 
 1. **37 scanned image PDFs** have no extractable text (mostly older DIR Rules from 1980s–90s and one Governor's Order). OCR integration (e.g., Tesseract) would capture these.
 2. **Python version:** The system runs on Python 3.9 (macOS default). Type hints use `Optional[X]` instead of `X | None` for compatibility.
 3. **No OCR:** Current pipeline only extracts text-layer PDFs. Image-only PDFs are skipped.
+4. **In-memory state:** Conversation history and system prompt changes are stored in-memory — lost on server restart.
 
 ---
 
-## 13. What's Next
+## 15. What's Next
 
-- [ ] **Retrieval engine** — multi-collection search with re-ranking
-- [ ] **RAG chain** — integrate retriever with GPT-4o-mini + conversation memory
-- [ ] **FastAPI endpoints** — REST API for programmatic access
-- [ ] **Streamlit chat UI** — interactive chat interface
+- [x] **Retrieval engine** — multi-collection search with auto-routing & re-ranking ✓
+- [x] **RAG chain** — GPT 5.1 with streaming, context injection, conversation memory ✓
+- [x] **FastAPI backend** — SSE streaming chat, settings, and history endpoints ✓
+- [x] **Chat UI** — custom dark glassmorphism interface with editable system instructions ✓
 - [ ] **OCR integration** — capture text from scanned image PDFs
 - [ ] **Automated tests** — unit tests for all core modules
+- [ ] **Persistent chat history** — save conversations across server restarts
+- [ ] **Deployment** — containerization and hosting strategy
