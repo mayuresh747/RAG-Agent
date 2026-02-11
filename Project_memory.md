@@ -315,8 +315,8 @@ Built a full-stack RAG chat application with GPT 5.1 streaming and a custom dark
 
 ### GPT 5.1 API Notes
 - Uses `max_completion_tokens` (not `max_tokens`) — required by the GPT 5.1 model family
-- Default temperature: 0.1 (low for factual legal responses)
-- Default max tokens: 2048
+- Default temperature: Adjustable via UI (0.0–1.0), defaults to 0.1
+- Default max tokens: 8192
 
 ---
 
@@ -392,6 +392,7 @@ Frontend CDN: `marked.js` (markdown rendering), Google Fonts (Inter)
 - [x] **RAG chain** — GPT 5.1 with streaming, context injection, conversation memory ✓
 - [x] **FastAPI backend** — SSE streaming chat, settings, and history endpoints ✓
 - [x] **Chat UI** — custom dark glassmorphism interface with editable system instructions ✓
+- [x] **Phase 7 Enhancements** — max tokens (8192), temperature slider, expanded source text, new system prompt ✓
 - [ ] **OCR integration** — capture text from scanned image PDFs
 - [ ] **Automated tests** — unit tests for all core modules
 - [ ] **Persistent chat history** — save conversations across server restarts
