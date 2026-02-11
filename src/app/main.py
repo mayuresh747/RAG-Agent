@@ -3,6 +3,7 @@ FastAPI Chat Server — SSE streaming RAG chat with settings management.
 """
 
 import json
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 
 from src.core.config import DEFAULT_SYSTEM_PROMPT, LLM_TEMPERATURE
 from src.core.rag_chain import chat_stream
+from src.core.session_logger import log_session
 
 
 # ── App setup ────────────────────────────────────────────────────────────
@@ -34,7 +36,7 @@ _state = {
 
 class ChatRequest(BaseModel):
     message: str
-    top_k: Optional[int] = 10
+    top_k: Optional[int] = 25
 
 
 class SettingsRequest(BaseModel):
@@ -55,8 +57,12 @@ async def serve_ui():
 async def chat_endpoint(request: ChatRequest):
     """Stream a RAG-augmented chat response via SSE."""
     full_tokens = []
+    usage_info = {"input_tokens": 0, "output_tokens": 0}
+    sources_count = 0
+    start_time = time.time()
 
     def event_generator():
+        nonlocal sources_count
         for event in chat_stream(
             user_message=request.message,
             conversation_history=_state["conversation_history"],
@@ -66,13 +72,29 @@ async def chat_endpoint(request: ChatRequest):
         ):
             if event["type"] == "token":
                 full_tokens.append(event["data"])
+            elif event["type"] == "sources":
+                sources_count = len(event.get("data", []))
+            elif event["type"] == "usage":
+                usage_info.update(event.get("data", {}))
             elif event["type"] == "done":
                 # Save to conversation history
+                answer_text = "".join(full_tokens)
                 _state["conversation_history"].append(
                     {"role": "user", "content": request.message}
                 )
                 _state["conversation_history"].append(
-                    {"role": "assistant", "content": "".join(full_tokens)}
+                    {"role": "assistant", "content": answer_text}
+                )
+                # Log session
+                duration_ms = int((time.time() - start_time) * 1000)
+                log_session(
+                    question=request.message,
+                    answer=answer_text,
+                    input_tokens=usage_info["input_tokens"],
+                    output_tokens=usage_info["output_tokens"],
+                    sources_count=sources_count,
+                    temperature=_state["temperature"],
+                    duration_ms=duration_ms,
                 )
             yield f"data: {json.dumps(event)}\n\n"
 

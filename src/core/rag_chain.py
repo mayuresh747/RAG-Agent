@@ -56,7 +56,7 @@ def chat_stream(
     user_message: str,
     conversation_history: list,
     system_prompt: Optional[str] = None,
-    top_k: int = 10,
+    top_k: int = 25,
     temperature: Optional[float] = None,
     max_context_chars: int = 10000,
 ) -> Generator[dict, None, None]:
@@ -126,12 +126,22 @@ def chat_stream(
             temperature=temp,
             max_completion_tokens=LLM_MAX_TOKENS,
             stream=True,
+            stream_options={"include_usage": True},
         )
 
+        usage_data = None
         for chunk in stream:
             if chunk.choices and chunk.choices[0].delta.content:
                 yield {"type": "token", "data": chunk.choices[0].delta.content}
+            # Capture usage from the final chunk
+            if hasattr(chunk, "usage") and chunk.usage is not None:
+                usage_data = {
+                    "input_tokens": chunk.usage.prompt_tokens or 0,
+                    "output_tokens": chunk.usage.completion_tokens or 0,
+                }
 
+        if usage_data:
+            yield {"type": "usage", "data": usage_data}
         yield {"type": "done"}
 
     except Exception as e:

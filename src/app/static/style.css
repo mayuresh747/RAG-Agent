@@ -67,7 +67,7 @@ html, body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    max-width: 860px;
+    max-width: 1100px;
     margin: 0 auto;
     position: relative;
 }
@@ -272,6 +272,12 @@ html, body {
     border-radius: var(--radius-lg);
     line-height: 1.65;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+}
+
+.message-bubble.reveal {
+    animation: revealIn 0.4s ease;
 }
 
 .message-user .message-bubble {
@@ -349,6 +355,92 @@ html, body {
     padding-left: 12px;
     margin: 8px 0;
     color: var(--text-secondary);
+}
+
+/* Tables inside assistant messages */
+.message-assistant .message-bubble table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.message-assistant .message-bubble thead {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.message-assistant .message-bubble tbody {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.message-assistant .message-bubble th {
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    white-space: normal;
+}
+
+.message-assistant .message-bubble td {
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    white-space: normal;
+}
+
+.message-assistant .message-bubble tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.message-assistant .message-bubble tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.message-assistant .message-bubble tr:hover {
+    background: rgba(124, 131, 255, 0.08);
+}
+
+/* Token usage badge */
+.token-usage {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    padding: 4px 0;
+}
+
+/* Thinking indicator */
+.thinking-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.thinking-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.thinking-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.thinking-elapsed {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ── Sources badge ─────────────────────────────────────────────── */
@@ -827,6 +919,17 @@ html, body {
 @keyframes typing {
     0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
     30% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes revealIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */

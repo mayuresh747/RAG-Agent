@@ -42,14 +42,56 @@ document.addEventListener('DOMContentLoaded', () => {
     sendBtn.addEventListener('click', sendMessage);
 
     // ── Example queries ───────────────────────────────────────────
-    document.querySelectorAll('.example-query').forEach(btn => {
-        btn.addEventListener('click', () => {
-            chatInput.value = btn.dataset.query;
-            sendBtn.disabled = false;
-            autoResize(chatInput);
-            sendMessage();
+    const QUESTION_POOL = [
+        // Standard Legal Queries (Grounded in available docs)
+        "What are the requirements for ADUs in Seattle under SMC?",
+        "RCW definition of 'family' for zoning purposes",
+        "WAC rules for childcare center licensing",
+        "Washington Supreme Court ruling on 'public duty doctrine'",
+        "Governor's emergency orders on eviction moratorium",
+        "Seattle Director's Rule on tree protection",
+        "SPU design standards for drainage in right-of-way",
+        "IBC seismic design category for Western Washington",
+        "Landlord-tenant act notice requirements RCW 59.18",
+        "Seattle noise ordinance construction hours",
+
+        // Conflict & Friction Queries (Seattle vs State vs Code)
+        "Does Seattle SMC 25.09 (critical areas) conflict with WAC 365-190?",
+        "Conflict between IBC egress requirements and Seattle Building Code amendments?",
+        "Differences in 'affordable housing' definitions: RCW vs SMC",
+        "State vs Seattle rules on short-term rentals (RCW 64.37 vs SMC)",
+        "Does Seattle's minimum wage ordinance conflict with state RCW?",
+        "SPU drainage rules vs Ecology stormwater manual (WAC)",
+        "Washington State energy code vs Seattle energy code amendments",
+        "Conflict between Governor's emergency proclamations and existing RCWs",
+        "SMC zoning density limits vs State 'Missing Middle' housing bill (HB 1110)",
+        "Court rulings interpreting 'vested rights' vs current SMC land use codes"
+    ];
+
+    function renderRandomExamples() {
+        const container = document.querySelector('.example-queries');
+        if (!container) return;
+
+        // Shuffle and pick 4
+        const shuffled = [...QUESTION_POOL].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 4);
+
+        container.innerHTML = '';
+        selected.forEach(q => {
+            const btn = document.createElement('button');
+            btn.className = 'example-query';
+            btn.textContent = q;
+            btn.addEventListener('click', () => {
+                chatInput.value = q;
+                sendBtn.disabled = false;
+                autoResize(chatInput);
+                sendMessage();
+            });
+            container.appendChild(btn);
         });
-    });
+    }
+
+    renderRandomExamples();
 
     // ── Clear chat ────────────────────────────────────────────────
     clearChat.addEventListener('click', async () => {
@@ -92,12 +134,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add user message
         addMessage('user', text);
 
-        // Add assistant placeholder with typing
+        // Add assistant placeholder with thinking
         const assistantMsg = addMessage('assistant', '', true);
         const bubble = assistantMsg.querySelector('.message-bubble');
         const sourcesContainer = assistantMsg.querySelector('.sources-container');
 
-        // Stream response
+        // Show thinking indicator
+        const startTime = Date.now();
+        bubble.innerHTML = thinkingHTML();
+        const thinkingTimer = setInterval(() => {
+            const el = bubble.querySelector('.thinking-elapsed');
+            if (el) {
+                const secs = Math.floor((Date.now() - startTime) / 1000);
+                el.textContent = `${secs}s`;
+            }
+        }, 1000);
+
+        // Stream response (buffered — user only sees thinking)
+        let fullText = '';
+        let usageData = null;
+
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -108,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-            let fullText = '';
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -122,19 +177,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!line.startsWith('data: ')) continue;
                     try {
                         const event = JSON.parse(line.slice(6));
-                        handleStreamEvent(event, bubble, sourcesContainer, fullText);
-                        if (event.type === 'token') fullText += event.data;
+                        if (event.type === 'token') {
+                            fullText += event.data;
+                        } else if (event.type === 'sources') {
+                            if (event.data && event.data.length > 0) {
+                                renderSources(sourcesContainer, event.data);
+                            }
+                        } else if (event.type === 'usage') {
+                            usageData = event.data;
+                        } else if (event.type === 'error') {
+                            clearInterval(thinkingTimer);
+                            bubble.innerHTML = `<span style="color: var(--error);">${event.data}</span>`;
+                        }
                     } catch (e) {
                         // skip malformed
                     }
                 }
             }
 
-            // Final render with markdown
+            // Reveal final markdown with fade-in
+            clearInterval(thinkingTimer);
+            bubble.classList.add('reveal');
             bubble.innerHTML = renderMarkdown(fullText);
-            removeTypingIndicator(bubble);
+
+            // Show token usage if available
+            if (usageData) {
+                const usageEl = document.createElement('div');
+                usageEl.className = 'token-usage';
+                const total = (usageData.input_tokens || 0) + (usageData.output_tokens || 0);
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                usageEl.textContent = `${total.toLocaleString()} tokens (${usageData.input_tokens.toLocaleString()} in · ${usageData.output_tokens.toLocaleString()} out) · ${elapsed}s`;
+                bubble.parentElement.appendChild(usageEl);
+            }
 
         } catch (err) {
+            clearInterval(thinkingTimer);
             bubble.innerHTML = `<span style="color: var(--error);">Connection error: ${err.message}</span>`;
         }
 
@@ -143,31 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom();
     }
 
-    // ── Stream event handler ──────────────────────────────────────
-    function handleStreamEvent(event, bubble, sourcesContainer, currentText) {
-        switch (event.type) {
-            case 'token':
-                removeTypingIndicator(bubble);
-                bubble.textContent = currentText + event.data;
-                scrollToBottom();
-                break;
-
-            case 'sources':
-                if (event.data && event.data.length > 0) {
-                    renderSources(sourcesContainer, event.data);
-                }
-                break;
-
-            case 'error':
-                removeTypingIndicator(bubble);
-                bubble.innerHTML = `<span style="color: var(--error);">${event.data}</span>`;
-                break;
-
-            case 'done':
-                removeTypingIndicator(bubble);
-                break;
-        }
-    }
+    // (Stream events are handled inline in sendMessage)
 
     // ── Add message to chat ───────────────────────────────────────
     function addMessage(role, content, showTyping = false) {
@@ -341,6 +394,18 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
+        </div>`;
+    }
+
+    function thinkingHTML() {
+        return `<div class="thinking-status">
+            <div class="thinking-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+            <span class="thinking-label">Analyzing sources & forming response…</span>
+            <span class="thinking-elapsed">0s</span>
         </div>`;
     }
 
