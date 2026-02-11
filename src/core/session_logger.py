@@ -13,7 +13,34 @@ LOGS_DIR = PROJECT_ROOT / "logs"
 LOG_FILE = LOGS_DIR / "sessions.jsonl"
 
 
+
+def get_next_session_id() -> int:
+    """
+    Scan the log file to find the highest session_id and return the next one.
+    Defaults to 1 if no logs exist.
+    """
+    if not LOG_FILE.exists():
+        return 1
+
+    max_id = 0
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    record = json.loads(line)
+                    sid = record.get("session_id", 0)
+                    if isinstance(sid, int) and sid > max_id:
+                        max_id = sid
+                except json.JSONDecodeError:
+                    continue
+    except Exception:
+        return 1
+    
+    return max_id + 1
+
+
 def log_session(
+    session_id: int,
     question: str,
     answer: str,
     input_tokens: int = 0,
@@ -27,6 +54,7 @@ def log_session(
 
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": session_id,
         "question": question,
         "answer": answer,
         "input_tokens": input_tokens,
@@ -39,3 +67,4 @@ def log_session(
 
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
