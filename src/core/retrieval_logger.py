@@ -10,6 +10,7 @@ LOG_DIR = PROJECT_ROOT / "logs"
 LOG_FILE = LOG_DIR / "retrievals.jsonl"
 
 def log_retrieval(
+    session_id: int,
     question: str,
     sources: List[Dict[str, Any]],
     temperature: float = 0.1,
@@ -18,6 +19,7 @@ def log_retrieval(
     Log retrieval details to a JSONL file.
     
     Args:
+        session_id: The sequential session number.
         question: The user's query.
         sources: List of source dictionaries (file, library, text, score, etc).
         temperature: LLM temperature used.
@@ -27,6 +29,7 @@ def log_retrieval(
     
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": session_id,
         "question": question,
         "temperature": temperature,
         "chunks_accessed": []

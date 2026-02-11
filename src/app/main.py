@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from src.core.config import DEFAULT_SYSTEM_PROMPT, LLM_TEMPERATURE
 from src.core.rag_chain import chat_stream
-from src.core.session_logger import log_session
+from src.core.session_logger import log_session, get_next_session_id
 from src.core.retrieval_logger import log_retrieval
 
 
@@ -30,6 +30,7 @@ _state = {
     "system_prompt": DEFAULT_SYSTEM_PROMPT,
     "conversation_history": [],
     "temperature": LLM_TEMPERATURE,
+    "session_id": get_next_session_id(),
 }
 
 
@@ -89,6 +90,7 @@ async def chat_endpoint(request: ChatRequest):
                 # Log session
                 duration_ms = int((time.time() - start_time) * 1000)
                 log_session(
+                    session_id=_state["session_id"],
                     question=request.message,
                     answer=answer_text,
                     input_tokens=usage_info["input_tokens"],
@@ -99,6 +101,7 @@ async def chat_endpoint(request: ChatRequest):
                 )
                 # Log detailed retrieval
                 log_retrieval(
+                    session_id=_state["session_id"],
                     question=request.message,
                     sources=sources_data,
                     temperature=_state["temperature"],
@@ -140,6 +143,11 @@ async def update_settings(request: SettingsRequest):
 
 @app.delete("/api/chat/history")
 async def clear_history():
-    """Clear conversation history."""
+    """Clear conversation history and start a new session ID."""
     _state["conversation_history"] = []
-    return {"status": "ok", "message": "Conversation cleared"}
+    _state["session_id"] += 1
+    return {
+        "status": "ok", 
+        "message": "Conversation cleared", 
+        "session_id": _state["session_id"]
+    }
