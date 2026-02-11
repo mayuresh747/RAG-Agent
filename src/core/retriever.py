@@ -333,7 +333,7 @@ def retrieve(
     query: str,
     libraries: Optional[list] = None,
     top_k: int = 10,
-    per_library_k: int = 10,
+    per_library_k: int = 25,
     where: Optional[dict] = None,
     auto_route: bool = True,
     min_score: float = 0.0,
