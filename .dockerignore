@@ -8,3 +8,8 @@ __pycache__
 All Documents
 docs
 tests
+data
+logs
+logs_from_server
+deploy_chunks
+*.jsonl
