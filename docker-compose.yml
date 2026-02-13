@@ -9,6 +9,7 @@ services:
       - "8000"
     volumes:
       - ./data:/app/data  # Persist the vector DB
+      - ./logs:/app/logs  # Persist logs
       - ./.env:/app/.env  # Use the env file
 
   caddy:
