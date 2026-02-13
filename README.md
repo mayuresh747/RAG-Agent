@@ -1,4 +1,4 @@
-# RAG Agent — Washington State Legal Document Search
+# RAG Agent — Seattle Policy Friction Repository
 
 A local Retrieval-Augmented Generation (RAG) chatbot that processes and answers questions from **6,021 PDFs** (~2.6 GB) of Washington State legal documents. All embeddings are stored locally in ChromaDB for privacy and speed.
 
@@ -74,33 +74,6 @@ python3 scripts/test_library.py --library rcw_chapters --query "landlord tenant 
 python3 scripts/test_library.py -l wac_chapters -q "food safety inspection" -k 10
 ```
 
-## Project Structure
-
-```
-RAG Agent/
-├── All Documents/          # Source PDFs (8 library folders)
-├── data/
-│   └── chromadb/           # Persistent vector store (local)
-├── scripts/
-│   ├── run_ingest.py       # CLI for document ingestion
-│   ├── test_library.py     # CLI for search testing
-│   └── estimate_tokens.py  # Token count estimator
-├── src/
-│   ├── core/
-│   │   ├── config.py       # Central configuration & library mappings
-│   │   ├── pdf_loader.py   # PDF text extraction (PyMuPDF)
-│   │   ├── chunker.py      # Legal-text-aware text chunking
-│   │   ├── embedder.py     # OpenAI embedding wrapper
-│   │   ├── vector_store.py # ChromaDB operations
-│   │   ├── ingest.py       # Ingestion orchestrator
-│   └── app/
-│       ├── main.py         # FastAPI server
-│       └── static/         # Frontend assets (HTML, CSS, JS)
-├── tests/                  # Unit & integration tests
-├── .env.example            # Environment variable template
-├── requirements.txt        # Python dependencies
-└── Project_memory.md       # Detailed project history & decisions
-```
 
 ## Key Configuration
 
