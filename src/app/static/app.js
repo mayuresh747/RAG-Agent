@@ -453,7 +453,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderMarkdown(text) {
         if (!text) return '';
         try {
-            return marked.parse(text, { breaks: true });
+            const rawHtml = marked.parse(text, { breaks: true });
+            return DOMPurify.sanitize(rawHtml);
         } catch (e) {
             return escapeHtml(text);
         }
