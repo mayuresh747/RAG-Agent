@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 # Log file path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -10,7 +10,7 @@ LOG_DIR = PROJECT_ROOT / "logs"
 LOG_FILE = LOG_DIR / "retrievals.jsonl"
 
 def log_retrieval(
-    session_id: int,
+    session_id: Union[str, int],
     question: str,
     sources: List[Dict[str, Any]],
     temperature: float = 0.1,

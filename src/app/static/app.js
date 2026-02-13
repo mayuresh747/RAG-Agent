@@ -20,11 +20,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempSlider = document.getElementById('tempSlider');
     const tempValue = document.getElementById('tempValue');
 
+    // Auth Elements
+    const authModal = document.getElementById('authModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const authBtn = document.getElementById('authBtn');
+    const authError = document.getElementById('authError');
+
     let isStreaming = false;
     let defaultPrompt = '';
+    
+    // Auth State
+    let apiKey = localStorage.getItem('rag_api_key') || '';
+    let sessionId = localStorage.getItem('rag_session_id');
+
+    // Generate Session ID if missing
+    if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('rag_session_id', sessionId);
+    }
 
     // ── Init ──────────────────────────────────────────────────────
-    loadSettings();
+    checkAuth();
+    
+    function checkAuth() {
+        if (!apiKey) {
+            authModal.style.display = 'flex';
+        } else {
+            authModal.style.display = 'none';
+            // Only load settings if we have a key (or attempt to)
+            loadSettings(); 
+        }
+    }
+
+    // Auth Event Listeners
+    authBtn.addEventListener('click', submitAuth);
+    apiKeyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitAuth();
+    });
+
+    function submitAuth() {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+            apiKey = key;
+            localStorage.setItem('rag_api_key', key);
+            checkAuth();
+        } else {
+            authError.textContent = "Please enter a key";
+        }
+    }
+
+    // Headers Helper
+    function getHeaders() {
+        return { 
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey
+        };
+    }
 
     // ── Input handling ────────────────────────────────────────────
     chatInput.addEventListener('input', () => {
@@ -95,10 +146,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Clear chat ────────────────────────────────────────────────
     clearChat.addEventListener('click', async () => {
-        await fetch('/api/chat/history', { method: 'DELETE' });
-        chatArea.innerHTML = '';
-        chatArea.appendChild(welcome);
-        welcome.style.display = 'flex';
+        try {
+            await fetch(`/api/chat/history?session_id=${sessionId}`, { 
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            chatArea.innerHTML = '';
+            chatArea.appendChild(welcome);
+            welcome.style.display = 'flex';
+        } catch (e) {
+            console.error("Clear chat failed", e);
+        }
     });
 
     // ── Sidebar ───────────────────────────────────────────────────
@@ -157,8 +215,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text }),
+                headers: getHeaders(),
+                body: JSON.stringify({ 
+                    message: text,
+                    session_id: sessionId
+                }),
             });
 
             const reader = response.body.getReader();
@@ -212,7 +273,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             clearInterval(thinkingTimer);
-            bubble.innerHTML = `<span style="color: var(--error);">Connection error: ${err.message}</span>`;
+            if (err.message && err.message.includes("403")) {
+                bubble.innerHTML = `<span style="color: var(--error);">Access Denied: Invalid Key. Please reload to try again.</span>`;
+                // Optionally trigger auth modal again
+                localStorage.removeItem('rag_api_key');
+            } else {
+                bubble.innerHTML = `<span style="color: var(--error);">Connection error: ${err.message || 'Unknown error'}</span>`;
+            }
         }
 
         isStreaming = false;
@@ -317,7 +384,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Settings ──────────────────────────────────────────────────
     async function loadSettings() {
         try {
-            const res = await fetch('/api/settings');
+            const res = await fetch(`/api/settings?session_id=${sessionId}`, {
+                headers: getHeaders()
+            });
             const data = await res.json();
             systemPrompt.value = data.system_prompt;
             defaultPrompt = data.system_prompt;
@@ -334,8 +403,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch('/api/settings', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 body: JSON.stringify({
+                    session_id: sessionId,
                     system_prompt: systemPrompt.value,
                     temperature: parseFloat(tempSlider.value),
                 }),

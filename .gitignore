@@ -22,3 +22,10 @@ All Documents/
 # IDEs
 .vscode/
 .idea/
+
+# Deployment
+deploy_chunks/
+scripts/deploy_aws.sh
+
+# Logs
+logs/

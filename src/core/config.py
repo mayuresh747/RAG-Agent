@@ -19,6 +19,9 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 # ── OpenAI ───────────────────────────────────────────────────────────────
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
+# ── Security ─────────────────────────────────────────────────────────────
+API_ACCESS_KEY = os.getenv("API_ACCESS_KEY", "")
+
 # ── Embedding ────────────────────────────────────────────────────────────
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072  # text-embedding-3-large native dimension
