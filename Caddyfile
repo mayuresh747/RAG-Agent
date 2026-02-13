@@ -1,0 +1,3 @@
+seattlepolicyagent.duckdns.org {
+    reverse_proxy rag-agent:8000
+}

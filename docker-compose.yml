@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  rag-agent:
+    build: .
+    container_name: rag-agent
+    restart: always
+    expose:
+      - "8000"
+    volumes:
+      - ./data:/app/data  # Persist the vector DB
+      - ./.env:/app/.env  # Use the env file
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy-server
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - rag-agent
+
+volumes:
+  caddy_data:
+  caddy_config:

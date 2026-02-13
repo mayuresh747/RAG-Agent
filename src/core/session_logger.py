@@ -6,6 +6,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import List, Dict, Union
 
 from src.core.config import PROJECT_ROOT
 
@@ -40,11 +41,12 @@ def get_next_session_id() -> int:
 
 
 def log_session(
-    session_id: int,
+    session_id: Union[str, int],
     question: str,
     answer: str,
     input_tokens: int = 0,
     output_tokens: int = 0,
+    sources: List[Dict] = [],
     sources_count: int = 0,
     temperature: float = 0.1,
     duration_ms: int = 0,
