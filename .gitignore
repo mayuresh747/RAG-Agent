@@ -29,3 +29,13 @@ scripts/deploy_aws.sh
 
 # Logs
 logs/
+logs_from_server/
+
+# Deployment
+deploy_chunks/
+scripts/deploy_aws.sh
+deploy_aws
+Caddyfile
+
+# Agent
+.ai/
