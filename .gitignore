@@ -22,6 +22,7 @@ All Documents/
 # IDEs
 .vscode/
 .idea/
+.agent/
 
 # Deployment
 deploy_chunks/
