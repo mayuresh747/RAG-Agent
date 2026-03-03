@@ -69,7 +69,7 @@ def get_session_state(session_id: str) -> Dict:
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=5000)
     session_id: str = Field(..., min_length=1, max_length=100)
-    top_k: Optional[int] = Field(25, ge=1, le=100)
+    top_k: Optional[int] = Field(None, ge=1, le=100)
 
 
 class SettingsRequest(BaseModel):
@@ -103,7 +103,7 @@ async def chat_endpoint(request: ChatRequest):
             user_message=request.message,
             conversation_history=state["conversation_history"],
             system_prompt=state["system_prompt"],
-            top_k=request.top_k or 10,
+            top_k=request.top_k,
             temperature=state["temperature"],
         ):
             if event["type"] == "token":

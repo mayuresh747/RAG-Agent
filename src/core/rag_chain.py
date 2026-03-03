@@ -52,11 +52,29 @@ def _build_context_block(result: RetrievalResult) -> str:
 
 # ── Main chat function ───────────────────────────────────────────────────
 
+def _is_complex_query(query: str, client: OpenAI) -> bool:
+    """Determine if a query is asking for conflicts/comparisons using a fast LLM."""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a query classifier. Return 'COMPLEX' if the user is asking for a comparison, conflict, difference, preemption, or inconsistency between rules, agencies, or locations. Otherwise, return 'SIMPLE'."},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.0,
+            max_tokens=10,
+        )
+        return "COMPLEX" in (response.choices[0].message.content or "").upper()
+    except Exception:
+        # Fallback to simple keyword logic if API fails
+        complex_keywords = ["conflict", "inconsistenc", "difference", "preemption", "friction", "contradict", "at odds"]
+        return any(kw in query.lower() for kw in complex_keywords)
+
 def chat_stream(
     user_message: str,
     conversation_history: list,
     system_prompt: Optional[str] = None,
-    top_k: int = 25,
+    top_k: Optional[int] = None,
     temperature: Optional[float] = None,
     max_context_chars: int = 10000,
 ) -> Generator[dict, None, None]:
@@ -70,6 +88,12 @@ def chat_stream(
         - {"type": "error", "data": "..."}       — error message
     """
     system = system_prompt or DEFAULT_SYSTEM_PROMPT
+
+    # Determine dynamic top_k based on prompt complexity
+    if top_k is None:
+        client = _get_client()
+        is_complex = _is_complex_query(user_message, client)
+        top_k = 24 if is_complex else 12
 
     # 1) Retrieve relevant context
     try:
@@ -152,7 +176,7 @@ def chat_sync(
     user_message: str,
     conversation_history: list,
     system_prompt: Optional[str] = None,
-    top_k: int = 10,
+    top_k: Optional[int] = None,
     temperature: Optional[float] = None,
 ) -> dict:
     """Non-streaming version — returns full response at once."""
