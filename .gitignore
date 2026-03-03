@@ -41,3 +41,10 @@ Caddyfile
 
 # Agent
 .ai/
+
+# Scripts and Tests
+scripts/upload_chunks_robust.sh
+scripts/upload_paramiko.py
+scripts/test_*.py
+test_*.py
+*test_*.py
