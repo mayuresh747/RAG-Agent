@@ -86,6 +86,7 @@ python3 scripts/test_library.py -l wac_chapters -q "food safety inspection" -k 1
 | Embedding Batch Size | 500 chunks/request |
 | Vector Store | ChromaDB (cosine similarity) |
 | LLM | `gpt-5.1` |
+| Minimum Host Requirements | **8GB RAM** (4GB RAM instances crash with OOM errors) |
 
 ## Next Steps
 
