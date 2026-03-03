@@ -35,6 +35,7 @@ All Documents/
 deploy_chunks/
 scripts/deploy_aws.sh
 scripts/sync_logs.sh
+scripts/rsync_loop.sh
 
 # Logs
 logs/
