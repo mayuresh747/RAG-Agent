@@ -1,13 +1,32 @@
+import argparse
 import paramiko
 import os
 import time
 import sys
 
-key_path = "/Users/mayuri/Documents/Projects/LightsailDefaultKey-us-west-2.pem"
-host = "100.20.68.210"
-user = "ubuntu"
-local_dir = "/Users/mayuri/Documents/Projects/RAG Agent/deploy_chunks"
-remote_dir = "/home/ubuntu/rag-agent/deploy_chunks"
+# ── CLI Arguments ────────────────────────────────────────────────────────
+parser = argparse.ArgumentParser(description="Upload deploy chunks to AWS via SFTP")
+parser.add_argument("--ip", default=os.environ.get("DEPLOY_IP"), help="Server IP (or set DEPLOY_IP env var)")
+parser.add_argument("--key", default=os.environ.get("DEPLOY_KEY"), help="SSH key path (or set DEPLOY_KEY env var)")
+parser.add_argument("--user", default="ubuntu", help="SSH username (default: ubuntu)")
+parser.add_argument("--local-dir", default=None, help="Local chunks directory")
+parser.add_argument("--remote-dir", default="/home/ubuntu/rag-agent/deploy_chunks", help="Remote chunks directory")
+parser.add_argument("--max-retries", type=int, default=20, help="Max retries per chunk (default: 20)")
+args = parser.parse_args()
+
+host = args.ip
+key_path = args.key
+user = args.user
+remote_dir = args.remote_dir
+max_retries = args.max_retries
+
+if not host or not key_path:
+    print("❌ Error: Server IP and SSH key path are required.")
+    print("   Use --ip and --key flags, or set DEPLOY_IP and DEPLOY_KEY env vars.")
+    sys.exit(1)
+
+# Default local dir relative to script location
+local_dir = args.local_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "deploy_chunks")
 
 print(f"Connecting to {host}...")
 ssh = paramiko.SSHClient()
@@ -55,7 +74,7 @@ for i, chunk in enumerate(chunks, 1):
     if need_upload:
         print(f"⬆️ Uploading {chunk} ({i}/{total})... ", end="", flush=True)
         
-        while True:  # Infinite retries for aggressive AWS resets
+        for attempt in range(1, max_retries + 1):
             try:
                 # Check how much is already uploaded to resume
                 remote_size = 0
@@ -92,7 +111,7 @@ for i, chunk in enumerate(chunks, 1):
                     break
                     
             except Exception as e:
-                print(f"❌ Failed: {e}. Reconnecting... ", end="", flush=True)
+                print(f"❌ Failed (attempt {attempt}/{max_retries}): {e}. Reconnecting... ", end="", flush=True)
                 time.sleep(3)
                 try:
                     sftp.close()
@@ -110,6 +129,11 @@ for i, chunk in enumerate(chunks, 1):
                     sftp = get_sftp(ssh)
                 except Exception as reconnect_err:
                     print(f"Reconnect failed: {reconnect_err}")
+        else:
+            print(f"\n❌ FATAL: Failed to upload {chunk} after {max_retries} attempts. Aborting.")
+            sftp.close()
+            ssh.close()
+            sys.exit(1)
 
 print("\n🎉 All chunks verified and uploaded successfully!")
 sftp.close()

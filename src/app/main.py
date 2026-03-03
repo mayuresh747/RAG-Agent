@@ -2,6 +2,7 @@
 FastAPI Chat Server — SSE streaming RAG chat with settings management.
 """
 
+import hmac
 import json
 import time
 from pathlib import Path
@@ -11,7 +12,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Security
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, List
 
 from src.core.config import (
@@ -44,8 +45,8 @@ async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
     if not API_ACCESS_KEY:
         # If no key configured, allow open access (dev mode)
         return api_key
-        
-    if not api_key or api_key != API_ACCESS_KEY:
+
+    if not api_key or not hmac.compare_digest(api_key, API_ACCESS_KEY):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing API Key"
@@ -66,15 +67,15 @@ def get_session_state(session_id: str) -> Dict:
 # ── Request / Response models ────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
-    message: str
-    session_id: str
-    top_k: Optional[int] = 25
+    message: str = Field(..., min_length=1, max_length=5000)
+    session_id: str = Field(..., min_length=1, max_length=100)
+    top_k: Optional[int] = Field(25, ge=1, le=100)
 
 
 class SettingsRequest(BaseModel):
-    session_id: str
-    system_prompt: str
-    temperature: Optional[float] = None
+    session_id: str = Field(..., min_length=1, max_length=100)
+    system_prompt: str = Field(..., max_length=50000)
+    temperature: Optional[float] = Field(None, ge=0.0, le=1.0)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────

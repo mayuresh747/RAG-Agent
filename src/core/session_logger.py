@@ -6,7 +6,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Union
+from typing import List, Dict, Optional, Union
 
 from src.core.config import PROJECT_ROOT
 
@@ -46,12 +46,14 @@ def log_session(
     answer: str,
     input_tokens: int = 0,
     output_tokens: int = 0,
-    sources: List[Dict] = [],
+    sources: Optional[List[Dict]] = None,
     sources_count: int = 0,
     temperature: float = 0.1,
     duration_ms: int = 0,
 ) -> None:
     """Append a session record to the JSONL log file."""
+    if sources is None:
+        sources = []
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
     record = {
