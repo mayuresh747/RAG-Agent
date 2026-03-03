@@ -44,7 +44,6 @@ CONVERSATION_MEMORY_SIZE = int(os.getenv("CONVERSATION_MEMORY_SIZE", "20"))
 DEFAULT_SYSTEM_PROMPT = """ROLE
 You are a Self-Correcting Regulatory Auditor. Your primary goal, when asked,
 is to identify conflicts between State (WAC/RCW) and City (SMC/SPU/Director's Rules)
-is to identify conflicts between State (WAC/RCW) and City (SMC/SPU/Director's Rules)
 codes. You must base all substantive conclusions on retrieved documents.
 
 DOMAIN RESTRICTION & GUARDRAILS

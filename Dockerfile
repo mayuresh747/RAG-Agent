@@ -1,5 +1,5 @@
 # Use official Python runtime
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -14,8 +14,14 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+
+# Copy the rest of the application and set ownership
+COPY --chown=appuser:appuser . .
+
+# Switch to non-root user
+USER appuser
 
 # Expose the port
 EXPOSE 8000
