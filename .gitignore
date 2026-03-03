@@ -3,7 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Configuration & Setup
+Dockerfile
+docker-compose.yml
+.dockerignore
+CHANGELOG.md
+
 # Environments
+
 .env
 .venv
 env/
