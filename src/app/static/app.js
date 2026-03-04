@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             authModal.style.display = 'none';
             // Only load settings if we have a key (or attempt to)
-            loadSettings(); 
+            // loadSettings(); // Hidden for now
         }
     }
 
@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Sidebar ───────────────────────────────────────────────────
+    /* Settings UI hidden
     openSettings.addEventListener('click', () => toggleSidebar(true));
     sidebarClose.addEventListener('click', () => toggleSidebar(false));
     sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
@@ -175,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tempSlider.addEventListener('input', () => {
         tempValue.textContent = parseFloat(tempSlider.value).toFixed(2);
     });
+    */
 
     // ── Send message ──────────────────────────────────────────────
     async function sendMessage() {
@@ -265,9 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (usageData) {
                 const usageEl = document.createElement('div');
                 usageEl.className = 'token-usage';
-                const total = (usageData.input_tokens || 0) + (usageData.output_tokens || 0);
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                usageEl.textContent = `${total.toLocaleString()} tokens (${usageData.input_tokens.toLocaleString()} in · ${usageData.output_tokens.toLocaleString()} out) · ${elapsed}s`;
+                usageEl.textContent = `Time: ${elapsed}s`;
                 bubble.parentElement.appendChild(usageEl);
             }
 
