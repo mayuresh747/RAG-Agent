@@ -411,5 +411,12 @@ Added structured JSONL logging to `logs/` directory:
 
 ### Source Count Consistency Fix
 Resolved an issue where queries routing to a single library returned only 10 sources (default `per_library_k`) while multi-library queries returned 25.
-- **Fix**: Increased `per_library_k` default to 25 in `src/core/retriever.py`.
 - **Outcome**: Consistent 25 sources returned for all queries if requested.
+
+---
+
+## 17. UI Adjustments (2026-03-03)
+
+### Settings Sidebar & Token Counts
+- **Settings Sidebar**: Hidden from the UI and disabled (commented out) for potential future reuse.
+- **Token Counts**: Modified the chat response metadata output to only display the elapsed time, hiding the input/output token counts.
