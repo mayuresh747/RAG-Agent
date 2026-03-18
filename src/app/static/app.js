@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
     const clearChat = document.getElementById('clearChat');
+    const shareBtn = document.getElementById('shareBtn');
     const openSettings = document.getElementById('openSettings');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -47,8 +48,21 @@ document.addEventListener('DOMContentLoaded', () => {
             authModal.style.display = 'flex';
         } else {
             authModal.style.display = 'none';
+            // Sync backend history state with empty UI state
+            clearBackendHistory();
             // Only load settings if we have a key (or attempt to)
             // loadSettings(); // Hidden for now
+        }
+    }
+
+    async function clearBackendHistory() {
+        try {
+            await fetch(`/api/chat/history?session_id=${sessionId}`, { 
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+        } catch (e) {
+            console.error("Failed to clear backend history on load", e);
         }
     }
 
@@ -144,6 +158,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderRandomExamples();
 
+    // ── Share conversation ────────────────────────────────────────
+    shareBtn.addEventListener('click', async () => {
+        shareBtn.disabled = true;
+        shareBtn.textContent = 'Sharing…';
+        try {
+            const res = await fetch('/api/share', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ session_id: sessionId }),
+            });
+            if (!res.ok) throw new Error('Failed to create share');
+            const data = await res.json();
+            showShareModal(window.location.origin + data.share_url);
+        } catch (e) {
+            console.error('Share failed', e);
+            alert('Could not create share link. Please try again.');
+        } finally {
+            shareBtn.disabled = false;
+            shareBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share`;
+        }
+    });
+
+    function showShareModal(url) {
+        const overlay = document.createElement('div');
+        overlay.className = 'share-modal-overlay';
+        overlay.innerHTML = `
+            <div class="share-modal">
+                <h3>Conversation shared</h3>
+                <p class="share-modal-sub">Link expires in 30 days. Only people you send it to can open it.</p>
+                <div class="share-url-row">
+                    <input class="share-url-input" type="text" value="${url}" readonly>
+                    <button class="btn btn-primary share-copy-btn" id="copyShareBtn">Copy</button>
+                </div>
+                <button class="btn btn-secondary share-close-btn" id="closeShareBtn">Close</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('copyShareBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('copyShareBtn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+            });
+        });
+
+        document.getElementById('closeShareBtn').addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
     // ── Clear chat ────────────────────────────────────────────────
     clearChat.addEventListener('click', async () => {
         try {
@@ -154,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatArea.innerHTML = '';
             chatArea.appendChild(welcome);
             welcome.style.display = 'flex';
+            shareBtn.style.display = 'none';
         } catch (e) {
             console.error("Clear chat failed", e);
         }
@@ -188,8 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         autoResize(chatInput);
 
-        // Hide welcome
+        // Hide welcome, reveal share button
         if (welcome) welcome.style.display = 'none';
+        shareBtn.style.display = 'inline-flex';
 
         // Add user message
         addMessage('user', text);
