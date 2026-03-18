@@ -286,6 +286,28 @@ html, body {
     min-width: 0;
 }
 
+.share-url-link {
+    flex: 1;
+    padding: 9px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.share-url-link:hover {
+    text-decoration: underline;
+}
+
 .share-copy-btn {
     flex-shrink: 0;
     padding: 9px 16px;

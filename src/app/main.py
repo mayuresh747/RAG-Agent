@@ -128,21 +128,56 @@ async def chat_endpoint(request: ChatRequest):
 
     def event_generator():
         nonlocal sources_data
-        for event in chat_stream(
-            user_message=request.message,
-            conversation_history=state["conversation_history"],
-            system_prompt=state["system_prompt"],
-            top_k=request.top_k,
-            temperature=state["temperature"],
-        ):
-            if event["type"] == "token":
-                full_tokens.append(event["data"])
-            elif event["type"] == "sources":
-                sources_data = event.get("data", [])
-            elif event["type"] == "usage":
-                usage_info.update(event.get("data", {}))
-            elif event["type"] == "done":
-                # Save to conversation history
+        history_saved = False
+        try:
+            for event in chat_stream(
+                user_message=request.message,
+                conversation_history=state["conversation_history"],
+                system_prompt=state["system_prompt"],
+                top_k=request.top_k,
+                temperature=state["temperature"],
+            ):
+                if event["type"] == "token":
+                    full_tokens.append(event["data"])
+                elif event["type"] == "sources":
+                    sources_data = event.get("data", [])
+                elif event["type"] == "usage":
+                    usage_info.update(event.get("data", {}))
+                elif event["type"] == "done":
+                    # Save to conversation history
+                    answer_text = "".join(full_tokens)
+                    state["conversation_history"].append(
+                        {"role": "user", "content": request.message}
+                    )
+                    state["conversation_history"].append(
+                        {"role": "assistant", "content": answer_text}
+                    )
+                    history_saved = True
+                    # Log session (isolated so failures don't break the stream)
+                    try:
+                        duration_ms = int((time.time() - start_time) * 1000)
+                        log_session(
+                            session_id=request.session_id,
+                            question=request.message,
+                            answer=answer_text,
+                            input_tokens=usage_info["input_tokens"],
+                            output_tokens=usage_info["output_tokens"],
+                            sources_count=len(sources_data),
+                            temperature=state["temperature"],
+                            duration_ms=duration_ms,
+                        )
+                        log_retrieval(
+                            session_id=request.session_id,
+                            question=request.message,
+                            sources=sources_data,
+                            temperature=state["temperature"],
+                        )
+                    except Exception:
+                        pass  # Logging failure must not affect chat or history
+                yield f"data: {json.dumps(event)}\n\n"
+        finally:
+            # Fallback: save history even if streaming was interrupted early
+            if not history_saved and full_tokens:
                 answer_text = "".join(full_tokens)
                 state["conversation_history"].append(
                     {"role": "user", "content": request.message}
@@ -150,26 +185,6 @@ async def chat_endpoint(request: ChatRequest):
                 state["conversation_history"].append(
                     {"role": "assistant", "content": answer_text}
                 )
-                # Log session
-                duration_ms = int((time.time() - start_time) * 1000)
-                log_session(
-                    session_id=request.session_id,
-                    question=request.message,
-                    answer=answer_text,
-                    input_tokens=usage_info["input_tokens"],
-                    output_tokens=usage_info["output_tokens"],
-                    sources_count=len(sources_data),
-                    temperature=state["temperature"],
-                    duration_ms=duration_ms,
-                )
-                # Log detailed retrieval
-                log_retrieval(
-                    session_id=request.session_id,
-                    question=request.message,
-                    sources=sources_data,
-                    temperature=state["temperature"],
-                )
-            yield f"data: {json.dumps(event)}\n\n"
 
     return StreamingResponse(
         event_generator(),
