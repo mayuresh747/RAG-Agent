@@ -4,12 +4,15 @@ FastAPI Chat Server — SSE streaming RAG chat with settings management.
 
 import hmac
 import json
+import secrets
+import sqlite3
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, status, Security
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
@@ -30,6 +33,28 @@ app = FastAPI(title="RAG Agent — WA Legal Research", version="1.0.0")
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# ── Shares DB ─────────────────────────────────────────────────────────────
+SHARES_DB_PATH = Path("./data/shares.db")
+
+def init_shares_db():
+    conn = sqlite3.connect(SHARES_DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS shared_conversations (
+            share_id          TEXT PRIMARY KEY,
+            created_at        TEXT NOT NULL,
+            expires_at        TEXT NOT NULL,
+            title             TEXT NOT NULL,
+            conversation_json TEXT NOT NULL,
+            message_count     INTEGER NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+@app.on_event("startup")
+async def startup():
+    init_shares_db()
 
 
 # ── In-memory state ──────────────────────────────────────────────────────
@@ -76,6 +101,10 @@ class SettingsRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=100)
     system_prompt: str = Field(..., max_length=50000)
     temperature: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+
+class ShareRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, max_length=100)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────
@@ -183,7 +212,68 @@ async def clear_history(session_id: str):
     if session_id in sessions:
         sessions[session_id]["conversation_history"] = []
     return {
-        "status": "ok", 
-        "message": "Conversation cleared", 
+        "status": "ok",
+        "message": "Conversation cleared",
         "session_id": session_id
     }
+
+
+# ── Share endpoints ───────────────────────────────────────────────────────
+
+@app.post("/api/share", dependencies=[Depends(verify_api_key)])
+async def create_share(req: ShareRequest):
+    """Save a conversation to disk and return a shareable link (expires in 30 days)."""
+    session = sessions.get(req.session_id)
+    if not session or not session.get("conversation_history"):
+        raise HTTPException(status_code=404, detail="Session not found or empty")
+
+    history = session["conversation_history"]
+    title = next(
+        (m["content"][:80] for m in history if m["role"] == "user"), "Untitled"
+    )
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(days=30)
+    share_id = secrets.token_urlsafe(12)  # 16-char URL-safe random token
+
+    conn = sqlite3.connect(SHARES_DB_PATH)
+    conn.execute(
+        "INSERT INTO shared_conversations VALUES (?, ?, ?, ?, ?, ?)",
+        (share_id, now.isoformat(), expires.isoformat(),
+         title, json.dumps(history), len(history)),
+    )
+    conn.commit()
+    conn.close()
+
+    return {"share_id": share_id, "share_url": f"/share/{share_id}"}
+
+
+@app.get("/api/share/{share_id}", dependencies=[Depends(verify_api_key)])
+async def get_share(share_id: str):
+    """Retrieve a shared conversation by its ID."""
+    conn = sqlite3.connect(SHARES_DB_PATH)
+    row = conn.execute(
+        "SELECT title, conversation_json, created_at, expires_at "
+        "FROM shared_conversations WHERE share_id = ?",
+        (share_id,),
+    ).fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    expires_at = datetime.fromisoformat(row[3])
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=410, detail="This link has expired")
+
+    return {
+        "title": row[0],
+        "conversation": json.loads(row[1]),
+        "created_at": row[2],
+        "expires_at": row[3],
+    }
+
+
+@app.get("/share/{share_id}")
+async def share_page(share_id: str):
+    """Serve the read-only shared conversation view."""
+    return FileResponse(str(STATIC_DIR / "share.html"))
