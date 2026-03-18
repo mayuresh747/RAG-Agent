@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
-   RAG Agent — Professional Light Theme
+   Seattle Regulatory Friction Observatory
+   "The Gazette" — Editorial Legal Interface
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Reset & Base ──────────────────────────────────────────────── */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -10,52 +10,61 @@
 }
 
 :root {
-    --bg-primary:    #ffffff;
-    --bg-secondary:  #f7f9fc;
-    --bg-tertiary:   #eef1f7;
+    /* ─── Palette ─────────────────────────────────────────────── */
+    --bg-primary:    #faf8f4;      /* warm parchment */
+    --bg-secondary:  #f0ebe3;      /* parchment mid */
+    --bg-tertiary:   #e4ddd4;      /* parchment dark */
 
-    --border:        #d8dde8;
-    --border-focus:  #1e3a5f;
+    --border:        #ccc4b8;      /* ruling line */
+    --border-focus:  #b91c1c;      /* accent red */
 
-    --text-primary:  #0f172a;
-    --text-secondary:#475569;
-    --text-muted:    #94a3b8;
-    --text-inverse:  #ffffff;
+    --text-primary:  #18181b;      /* near-black ink */
+    --text-secondary:#3f3f46;      /* medium ink — darkened for parchment contrast */
+    --text-muted:    #71717a;      /* ghost ink — raised from a1a1aa for readability */
+    --text-inverse:  #faf8f4;
 
-    --accent:        #1e3a5f;
-    --accent-mid:    #2c5282;
-    --accent-dim:    rgba(30, 58, 95, 0.08);
-    --accent-glow:   rgba(30, 58, 95, 0.12);
+    --accent:        #4b2e83;      /* UW Husky Purple */
+    --accent-mid:    #3b2468;
+    --accent-dim:    rgba(75, 46, 131, 0.07);
+    --accent-glow:   rgba(75, 46, 131, 0.15);
+    --accent-gold:   #b7a57a;     /* UW Metallic Gold */
 
-    --success:       #15803d;
-    --warning:       #b45309;
+    --success:       #166534;
+    --warning:       #92400e;
     --error:         #dc2626;
 
-    --user-bubble:   #1e3a5f;
-    --assistant-bubble: var(--bg-secondary);
+    --user-bubble:   #18181b;
+    --assistant-bubble: var(--bg-primary);
 
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    /* ─── Typography ──────────────────────────────────────────── */
+    --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+    --font-body:    'Lora', Georgia, serif;
+    --font-mono:    'DM Mono', 'Fira Code', 'SF Mono', monospace;
+    --font: var(--font-body); /* legacy alias */
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+    /* ─── Shape ───────────────────────────────────────────────── */
+    --radius-sm: 2px;
+    --radius-md: 3px;
+    --radius-lg: 4px;
+    --radius-xl: 8px;
 
-    --transition:      0.15s ease;
-    --transition-slow: 0.25s ease;
+    /* ─── Depth ───────────────────────────────────────────────── */
+    --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+    --shadow-md: 0 4px 14px rgba(24, 24, 27, 0.08);
+    --shadow-lg: 0 16px 48px rgba(24, 24, 27, 0.14);
 
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* ─── Motion ──────────────────────────────────────────────── */
+    --transition:      0.16s ease;
+    --transition-slow: 0.28s ease;
 }
 
 html, body {
     height: 100%;
     background: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font);
-    font-size: 14px;
-    line-height: 1.6;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
 }
@@ -64,7 +73,7 @@ html, body {
 .auth-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(24, 24, 27, 0.6);
     z-index: 200;
     display: flex;
     align-items: center;
@@ -74,53 +83,60 @@ html, body {
 
 .auth-box {
     width: 100%;
-    max-width: 360px;
-    padding: 36px;
+    max-width: 380px;
+    padding: 44px 40px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
+    border-top: 3px solid var(--accent-gold);
+    border-radius: var(--radius-md);
     text-align: center;
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
+    animation: slideIn 0.3s ease;
 }
 
 .auth-icon {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
     background: var(--accent-dim);
     color: var(--accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
 .auth-box h2 {
-    font-size: 18px;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
     margin-bottom: 8px;
     color: var(--text-primary);
+    letter-spacing: -0.01em;
 }
 
 .auth-box p {
-    color: var(--text-secondary);
-    font-size: 13px;
-    margin-bottom: 24px;
-    line-height: 1.55;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    line-height: 1.7;
 }
 
 .auth-input {
     width: 100%;
     padding: 11px 14px;
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text-primary);
-    font-family: var(--font);
-    font-size: 16px;
+    font-family: var(--font-mono);
+    font-size: 14px;
     margin-bottom: 12px;
     outline: none;
     transition: var(--transition);
@@ -129,19 +145,21 @@ html, body {
 .auth-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-dim);
+    background: var(--bg-primary);
 }
 
 .auth-btn {
     width: 100%;
     padding: 12px;
-    font-size: 14px;
+    font-size: 11px;
 }
 
 .auth-error {
     color: var(--error);
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     margin-top: 12px;
-    min-height: 20px;
+    min-height: 18px;
 }
 
 /* ── App Layout ────────────────────────────────────────────────── */
@@ -149,7 +167,7 @@ html, body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    max-width: 1100px;
+    max-width: 960px;
     margin: 0 auto;
     position: relative;
 }
@@ -159,46 +177,76 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 0 24px;
+    height: 58px;
     border-bottom: 1px solid var(--border);
     background: var(--bg-primary);
     z-index: 10;
     flex-shrink: 0;
+    position: relative;
+}
+
+/* UW Gold masthead stripe */
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-gold) 100%);
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .logo {
-    width: 34px;
-    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-dim);
-    border-radius: var(--radius-md);
-    color: var(--accent);
+    flex-shrink: 0;
+    height: 34px;
+    /* Subtle shadow to lift the white logo off parchment */
+    filter: drop-shadow(0 1px 2px rgba(75, 46, 131, 0.18));
+}
+
+.logo img {
+    height: 34px;
+    width: auto;
+    display: block;
+    object-fit: contain;
+}
+
+/* Fallback SVG sizing */
+.logo svg {
+    height: 34px;
+    width: auto;
+    display: block;
 }
 
 .header-title h1 {
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.005em;
     color: var(--text-primary);
+    line-height: 1.1;
 }
 
 .header-subtitle {
-    font-size: 11px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--text-muted);
-    font-weight: 400;
+    display: block;
+    margin-top: 2px;
 }
 
 .header-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
 }
 
@@ -206,35 +254,37 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 13px;
+    padding: 6px 14px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 500;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 400;
     cursor: pointer;
     transition: var(--transition);
     text-decoration: none;
 }
 
 .share-btn:hover:not(:disabled) {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: var(--bg-primary);
 }
 
 .share-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
-/* ── Share modal ───────────────────────────────────────────────── */
+/* ── Share Modal ───────────────────────────────────────────────── */
 .share-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(24, 24, 27, 0.5);
     z-index: 200;
     display: flex;
     align-items: center;
@@ -244,28 +294,32 @@ html, body {
 
 .share-modal {
     width: 100%;
-    max-width: 420px;
-    padding: 28px;
+    max-width: 440px;
+    padding: 32px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
+    border-top: 3px solid var(--accent-gold);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .share-modal h3 {
-    font-size: 15px;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 400;
     color: var(--text-primary);
 }
 
 .share-modal-sub {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.5;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
     margin: 0;
+    text-transform: uppercase;
 }
 
 .share-url-row {
@@ -280,8 +334,8 @@ html, body {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     outline: none;
     min-width: 0;
 }
@@ -293,8 +347,8 @@ html, body {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--accent);
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -303,25 +357,22 @@ html, body {
     display: flex;
     align-items: center;
 }
-
-.share-url-link:hover {
-    text-decoration: underline;
-}
+.share-url-link:hover { text-decoration: underline; }
 
 .share-copy-btn {
     flex-shrink: 0;
-    padding: 9px 16px;
+    padding: 9px 18px;
 }
 
 .share-close-btn {
     align-self: flex-end;
     padding: 7px 16px;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -334,7 +385,7 @@ html, body {
 }
 
 .icon-btn:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     color: var(--text-primary);
     border-color: var(--border);
 }
@@ -343,22 +394,18 @@ html, body {
 .chat-area {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 20px;
-    background: var(--bg-primary);
+    padding: 36px 32px;
     scroll-behavior: smooth;
+    /* Subtle dot grid — gives parchment/graph-paper depth */
+    background-color: var(--bg-primary);
+    background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='0.8' fill='%23ccc4b8' fill-opacity='0.35'/%3E%3C/svg%3E");
 }
 
-.chat-area::-webkit-scrollbar {
-    width: 5px;
-}
-
-.chat-area::-webkit-scrollbar-track {
-    background: transparent;
-}
-
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-track { background: transparent; }
 .chat-area::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 /* ── Welcome Screen ────────────────────────────────────────────── */
@@ -368,70 +415,82 @@ html, body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 60px 20px 40px;
-    animation: fadeIn 0.4s ease;
+    padding: 56px 20px 44px;
+    animation: fadeIn 0.5s ease;
+    max-width: 680px;
+    margin: 0 auto;
 }
 
 .welcome-icon {
-    width: 68px;
-    height: 68px;
+    width: 72px;
+    height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-dim);
-    border-radius: 16px;
-    color: var(--accent);
-    margin-bottom: 20px;
+    background: var(--text-primary);
+    border-radius: var(--radius-sm);
+    color: var(--bg-primary);
+    margin-bottom: 24px;
 }
 
 .welcome h2 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
+    line-height: 1.2;
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 14px;
 }
 
 .welcome p {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     max-width: 400px;
-    margin-bottom: 32px;
-    font-size: 13px;
+    margin-bottom: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.8;
 }
 
 .example-queries {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    max-width: 520px;
+    max-width: 580px;
     width: 100%;
+    margin-top: 28px;
 }
 
 .example-query {
-    padding: 11px 14px;
+    padding: 12px 14px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-left: 3px solid var(--bg-tertiary);
+    border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-family: var(--font);
+    font-family: var(--font-body);
     font-size: 12px;
     cursor: pointer;
     transition: var(--transition);
     text-align: left;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .example-query:hover {
     background: var(--bg-secondary);
-    border-color: var(--accent);
+    border-left-color: var(--accent);
     color: var(--text-primary);
 }
 
 /* ── Messages ──────────────────────────────────────────────────── */
 .message {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 14px;
+    margin-bottom: 28px;
     animation: slideIn 0.22s ease;
 }
 
@@ -440,188 +499,283 @@ html, body {
 }
 
 .message-avatar {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
 .message-user .message-avatar {
-    background: var(--user-bubble);
-    color: white;
+    background: var(--text-primary);
+    color: var(--bg-primary);
 }
 
 .message-assistant .message-avatar {
-    background: var(--accent-dim);
-    color: var(--accent);
-    border: 1px solid var(--border);
+    background: var(--accent);
+    color: white;
 }
 
 .message-content {
-    max-width: 75%;
+    max-width: 76%;
     min-width: 80px;
 }
 
 .message-bubble {
-    padding: 12px 16px;
-    border-radius: var(--radius-lg);
-    line-height: 1.65;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    line-height: 1.72;
     word-wrap: break-word;
     overflow-wrap: break-word;
     overflow-x: auto;
+    font-family: var(--font-body);
+    font-size: 15px;
 }
 
 .message-bubble.reveal {
-    animation: revealIn 0.3s ease;
+    animation: revealIn 0.3s ease both;
 }
 
+/* User: stark charcoal rectangle */
 .message-user .message-bubble {
-    background: var(--user-bubble);
-    color: white;
-    border-bottom-right-radius: 4px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border-bottom-right-radius: 1px;
 }
 
+/* Assistant: one tone warmer than chat bg — still parchment, clearly distinct */
 .message-assistant .message-bubble {
-    background: var(--assistant-bubble);
+    background: var(--bg-secondary);
+    color: var(--text-primary);          /* explicit — never invisible regardless of cascade */
     border: 1px solid var(--border);
-    border-bottom-left-radius: 4px;
+    border-left: 3px solid var(--accent);
+    border-bottom-left-radius: 1px;
+    padding-left: 20px;
+    box-shadow: 0 1px 4px rgba(75, 46, 131, 0.06);
 }
 
-/* Markdown in assistant bubbles */
-.message-assistant .message-bubble h1,
-.message-assistant .message-bubble h2,
-.message-assistant .message-bubble h3 {
-    margin-top: 14px;
-    margin-bottom: 6px;
-    font-weight: 600;
+/* ── Markdown typography hierarchy ───────────────────────────── */
+
+/* H1 — Major section break; DM Serif Display with full accent underline */
+.message-assistant .message-bubble h1 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 400;
     color: var(--text-primary);
+    margin-top: 24px;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 2px solid var(--accent);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
 }
 
-.message-assistant .message-bubble h1 { font-size: 16px; }
-.message-assistant .message-bubble h2 { font-size: 15px; }
-.message-assistant .message-bubble h3 { font-size: 14px; color: var(--accent); }
+/* H2 — Section heading; gold left-bar accent, distinct from H1 */
+.message-assistant .message-bubble h2 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-top: 20px;
+    margin-bottom: 7px;
+    padding: 2px 0 2px 10px;
+    border-left: 3px solid var(--accent-gold);
+    letter-spacing: -0.005em;
+    line-height: 1.3;
+}
+
+/* H3 — Sub-section; Lora italic in accent purple — clearly softer than H2 */
+.message-assistant .message-bubble h3 {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 16px;
+    margin-bottom: 5px;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+/* No extra top-margin when heading is the very first element */
+.message-assistant .message-bubble h1:first-child,
+.message-assistant .message-bubble h2:first-child,
+.message-assistant .message-bubble h3:first-child { margin-top: 0; }
 
 .message-assistant .message-bubble p {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .message-assistant .message-bubble p:last-child {
     margin-bottom: 0;
 }
 
-.message-assistant .message-bubble ul,
-.message-assistant .message-bubble ol {
-    margin: 8px 0;
+/* ── Lists — custom markers ────────────────────────────────────── */
+
+/* Unordered: em-dash bullets in accent purple */
+.message-assistant .message-bubble ul {
+    list-style: none;
+    margin: 10px 0;
+    padding-left: 0;
+}
+
+.message-assistant .message-bubble ul li {
+    position: relative;
     padding-left: 20px;
+    margin-bottom: 6px;
 }
 
-.message-assistant .message-bubble li {
-    margin-bottom: 4px;
+.message-assistant .message-bubble ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.65;
 }
 
-.message-assistant .message-bubble code {
-    padding: 2px 6px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-size: 12px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    color: var(--text-primary);
+/* Ordered: purple badge numbers replacing default browser numbers */
+.message-assistant .message-bubble ol {
+    list-style: none;
+    counter-reset: ol-counter;
+    margin: 10px 0;
+    padding-left: 0;
+}
+
+.message-assistant .message-bubble ol li {
+    counter-increment: ol-counter;
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 7px;
+}
+
+.message-assistant .message-bubble ol li::before {
+    content: counter(ol-counter);
+    position: absolute;
+    left: 0;
+    top: 3px;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .message-assistant .message-bubble pre {
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    padding: 14px 16px;
+    background: var(--text-primary);
     border-radius: var(--radius-sm);
     overflow-x: auto;
-    margin: 8px 0;
+    margin: 10px 0;
 }
 
 .message-assistant .message-bubble pre code {
     padding: 0;
     background: none;
     border: none;
+    color: #e4e4e7;
+    font-size: 12px;
 }
 
+/* Bold/important text — brighter purple (equivalent contrast to original on dark bg) */
 .message-assistant .message-bubble strong {
-    color: var(--text-primary);
-    font-weight: 600;
+    color: #6d28d9;
+    font-weight: 700;
+    font-style: normal;
 }
 
+.message-assistant .message-bubble em {
+    font-style: italic;
+    color: var(--text-secondary);  /* distinct from strong (purple) without fighting it */
+}
+
+/* Citations and legal references — styled as annotation callouts */
 .message-assistant .message-bubble blockquote {
     border-left: 3px solid var(--accent);
-    padding-left: 12px;
-    margin: 8px 0;
+    padding: 8px 14px;
+    margin: 12px 0;
     color: var(--text-secondary);
     font-style: italic;
+    background: rgba(75, 46, 131, 0.05);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
-/* Tables inside assistant messages */
+/* RCW / WAC / SMC inline code — very light tint, border carries the color signal */
+.message-assistant .message-bubble code {
+    padding: 1px 6px;
+    background: rgba(75, 46, 131, 0.04);
+    border: 1px solid rgba(75, 46, 131, 0.18);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+}
+
+/* Tables */
 .message-assistant .message-bubble table {
     width: 100%;
     border-collapse: collapse;
     margin: 12px 0;
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     display: block;
     overflow-x: auto;
     white-space: nowrap;
 }
 
-.message-assistant .message-bubble thead {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-}
-
-.message-assistant .message-bubble tbody {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-}
+.message-assistant .message-bubble thead { display: table; width: 100%; table-layout: fixed; }
+.message-assistant .message-bubble tbody { display: table; width: 100%; table-layout: fixed; }
 
 .message-assistant .message-bubble th {
-    background: var(--accent-dim);
-    color: var(--accent);
-    font-weight: 600;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    font-weight: 500;
     text-align: left;
-    padding: 9px 14px;
-    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border: 1px solid var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     white-space: normal;
 }
 
 .message-assistant .message-bubble td {
-    padding: 8px 14px;
+    padding: 7px 12px;
     border: 1px solid var(--border);
     color: var(--text-primary);
     white-space: normal;
 }
 
-.message-assistant .message-bubble tr:nth-child(even) {
-    background: var(--bg-secondary);
-}
+.message-assistant .message-bubble tr:nth-child(even) { background: var(--bg-secondary); }
+.message-assistant .message-bubble tr:nth-child(odd) { background: var(--bg-primary); }
+.message-assistant .message-bubble tr:hover { background: var(--accent-dim); }
 
-.message-assistant .message-bubble tr:nth-child(odd) {
-    background: var(--bg-primary);
-}
-
-.message-assistant .message-bubble tr:hover {
-    background: var(--accent-dim);
-}
-
-/* Token usage badge */
+/* Token usage */
 .token-usage {
-    margin-top: 6px;
-    font-size: 11px;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    padding: 2px 0;
+    padding: 0 2px;
 }
 
 /* ── Thinking / Streaming Preview ──────────────────────────────── */
@@ -634,7 +788,7 @@ html, body {
 .thinking-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 4px 0;
 }
 
@@ -644,14 +798,19 @@ html, body {
 }
 
 .thinking-label {
-    color: var(--text-secondary);
-    font-size: 13px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
 }
 
 .thinking-elapsed {
-    color: var(--text-muted);
-    font-size: 12px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
 }
 
 .thinking-expand-btn {
@@ -662,16 +821,19 @@ html, body {
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     cursor: pointer;
-    padding: 3px 7px;
+    padding: 3px 8px;
     display: flex;
     align-items: center;
+    gap: 4px;
     transition: var(--transition);
-    line-height: 1;
-    title: "Preview response";
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .thinking-expand-btn:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     color: var(--accent);
     border-color: var(--accent);
 }
@@ -684,26 +846,47 @@ html, body {
     transform: rotate(180deg);
 }
 
+/* Terminal-style streaming preview — phosphor green on black */
 .streaming-preview {
     display: none;
-    margin-top: 8px;
-    height: 220px;
+    margin-top: 10px;
+    height: 200px;
     overflow-y: auto;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    background: #0f0f0f;
     border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--text-secondary);
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.75;
+    color: #86efac;    /* phosphor green */
     white-space: pre-wrap;
     word-break: break-word;
+    border: 1px solid #2a2a2a;
 }
+
+.streaming-preview::-webkit-scrollbar { width: 3px; }
+.streaming-preview::-webkit-scrollbar-thumb { background: #333; }
 
 .streaming-preview.open {
     display: block;
     animation: fadeIn 0.2s ease;
+}
+
+/* ── Inline citation reference badge ("Source 2" in answer text) ── */
+.citation-ref {
+    display: inline-flex;
+    align-items: center;
+    padding: 0px 6px 1px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    vertical-align: baseline;
+    white-space: nowrap;
+    line-height: 1.6;
 }
 
 /* ── Sources ───────────────────────────────────────────────────── */
@@ -715,13 +898,15 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 11px;
+    padding: 5px 12px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    font-family: var(--font);
-    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
     cursor: pointer;
     transition: var(--transition);
 }
@@ -729,6 +914,7 @@ html, body {
 .sources-toggle:hover {
     background: var(--bg-secondary);
     color: var(--text-primary);
+    border-color: var(--text-secondary);
 }
 
 .sources-toggle svg {
@@ -742,10 +928,10 @@ html, body {
 .sources-list {
     display: none;
     margin-top: 8px;
-    padding: 10px;
+    padding: 12px;
     background: var(--bg-secondary);
-    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
 }
 
 .sources-list.open {
@@ -771,7 +957,8 @@ html, body {
     gap: 8px;
     padding: 2px 4px;
     transition: var(--transition);
-    border-radius: 4px;
+    border-radius: 2px;
+    cursor: pointer;
 }
 
 .source-header:hover {
@@ -795,18 +982,20 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 11px;
 }
 
 .source-text {
     display: none;
     margin: 6px 0 4px 20px;
     padding: 10px 12px;
-    background: var(--bg-tertiary);
+    background: var(--bg-primary);
     border-radius: var(--radius-sm);
-    border-left: 2px solid var(--border);
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    border-left: 2px solid var(--accent);
+    font-family: var(--font-mono);
     font-size: 11px;
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--text-secondary);
     white-space: pre-wrap;
     word-break: break-word;
@@ -819,19 +1008,42 @@ html, body {
     animation: fadeIn 0.2s ease;
 }
 
-.source-badge {
-    padding: 2px 6px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    border-radius: 4px;
+/* Source number — matches the .citation-ref badge in the answer text */
+.source-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 2px;
+    font-family: var(--font-mono);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.source-badge {
+    padding: 1px 6px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
 .source-score {
     color: var(--text-muted);
-    font-size: 11px;
+    font-family: var(--font-mono);
+    font-size: 10px;
     white-space: nowrap;
     margin-left: auto;
 }
@@ -840,23 +1052,23 @@ html, body {
 .typing-indicator {
     display: flex;
     gap: 4px;
-    padding: 8px 4px;
+    padding: 6px 0;
 }
 
 .typing-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
-    background: var(--text-muted);
+    background: var(--border);
     animation: typing 1.4s infinite;
 }
 
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) { animation-delay: 0.22s; }
+.typing-dot:nth-child(3) { animation-delay: 0.44s; }
 
 /* ── Input Area ────────────────────────────────────────────────── */
 .input-area {
-    padding: 12px 20px 16px;
+    padding: 14px 24px 18px;
     border-top: 1px solid var(--border);
     background: var(--bg-primary);
     flex-shrink: 0;
@@ -865,18 +1077,19 @@ html, body {
 .input-container {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
+    gap: 10px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 6px 6px 6px 16px;
+    border-bottom: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 8px 8px 18px;
     transition: var(--transition);
-    box-shadow: var(--shadow-sm);
 }
 
 .input-container:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
+    border-color: var(--text-primary);
+    border-bottom-color: var(--accent);
+    box-shadow: none;
 }
 
 .chat-input {
@@ -885,55 +1098,61 @@ html, body {
     border: none;
     outline: none;
     color: var(--text-primary);
-    font-family: var(--font);
-    font-size: 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
     line-height: 1.5;
     resize: none;
-    padding: 8px 0;
-    max-height: 150px;
-    min-height: 21px;
+    padding: 6px 0;
+    max-height: 140px;
+    min-height: 22px;
 }
 
 .chat-input::placeholder {
     color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
 }
 
 .send-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent);
+    background: var(--text-primary);
     border: none;
     border-radius: var(--radius-sm);
-    color: white;
+    color: var(--bg-primary);
     cursor: pointer;
     transition: var(--transition);
     flex-shrink: 0;
 }
 
 .send-btn:hover:not(:disabled) {
-    background: var(--accent-mid);
+    background: var(--accent);
 }
 
 .send-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.22;
     cursor: not-allowed;
 }
 
 .input-hint {
     text-align: center;
-    font-size: 11px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
     color: var(--text-muted);
-    margin-top: 8px;
+    margin-top: 9px;
 }
 
 /* ── Sidebar ───────────────────────────────────────────────────── */
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.3);
+    background: rgba(24, 24, 27, 0.35);
     z-index: 90;
     opacity: 0;
     visibility: hidden;
@@ -969,14 +1188,16 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 18px 20px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
 .sidebar-header h2 {
-    font-size: 14px;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-primary);
 }
 
 .sidebar-close {
@@ -994,7 +1215,7 @@ html, body {
 }
 
 .sidebar-close:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
@@ -1007,21 +1228,23 @@ html, body {
 }
 
 .sidebar-hint {
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
     margin-bottom: 12px;
-    line-height: 1.5;
+    line-height: 1.7;
 }
 
 .system-prompt-input {
     flex: 1;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.65;
     padding: 14px;
     resize: none;
     outline: none;
@@ -1030,7 +1253,6 @@ html, body {
 
 .system-prompt-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .sidebar-actions {
@@ -1040,25 +1262,28 @@ html, body {
     flex-shrink: 0;
 }
 
+/* ── Buttons ───────────────────────────────────────────────────── */
 .btn {
-    padding: 8px 16px;
+    padding: 9px 18px;
     border: none;
     border-radius: var(--radius-sm);
-    font-family: var(--font);
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .btn-primary {
-    background: var(--accent);
-    color: white;
+    background: var(--text-primary);
+    color: var(--bg-primary);
     flex: 1;
 }
 
 .btn-primary:hover {
-    background: var(--accent-mid);
+    background: var(--accent);
 }
 
 .btn-secondary {
@@ -1068,13 +1293,15 @@ html, body {
 }
 
 .btn-secondary:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
 .save-status {
     margin-top: 10px;
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
     text-align: center;
     min-height: 18px;
     flex-shrink: 0;
@@ -1089,7 +1316,7 @@ html, body {
     padding: 14px;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
 }
 
 .temp-header {
@@ -1100,25 +1327,27 @@ html, body {
 }
 
 .temp-header label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
 }
 
 .temp-value {
+    font-family: var(--font-mono);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--accent);
-    font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
 .temp-slider {
     width: 100%;
-    height: 4px;
+    height: 2px;
     -webkit-appearance: none;
     appearance: none;
     background: var(--border);
-    border-radius: 2px;
+    border-radius: 1px;
     outline: none;
     cursor: pointer;
 }
@@ -1128,20 +1357,20 @@ html, body {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--text-primary);
     cursor: pointer;
     transition: var(--transition);
 }
 
 .temp-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
+    background: var(--accent);
 }
 
 .temp-slider::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--text-primary);
     cursor: pointer;
     border: none;
 }
@@ -1150,7 +1379,10 @@ html, body {
     display: flex;
     justify-content: space-between;
     margin-top: 4px;
-    font-size: 10px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--text-muted);
 }
 
@@ -1161,24 +1393,28 @@ html, body {
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes typing {
-    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+    0%, 60%, 100% { opacity: 0.2; transform: scale(0.75); }
     30%           { opacity: 1;   transform: scale(1); }
 }
 
 @keyframes revealIn {
-    from { opacity: 0; transform: translateY(3px); }
+    from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 640px) {
     .app { max-width: 100%; }
+    .chat-area { padding: 20px 16px; }
+    .input-area { padding: 12px 16px 16px; }
     .example-queries { grid-template-columns: 1fr; }
-    .message-content { max-width: 85%; }
+    .message-content { max-width: 88%; }
     .header-subtitle { display: none; }
+    .welcome h2 { font-size: 22px; }
+    .header { padding: 0 16px; }
 }
