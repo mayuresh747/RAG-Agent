@@ -30,6 +30,8 @@ All Documents/
 .vscode/
 .idea/
 .agent/
+.claude/
+
 
 # Deployment
 deploy_chunks/
