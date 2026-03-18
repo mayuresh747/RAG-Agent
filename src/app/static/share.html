@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Conversation — Seattle Regulatory Friction Observatory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Share-page overrides */
+        html, body { overflow: auto; }
+
+        .share-app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .share-content {
+            flex: 1;
+            padding: 24px 20px 48px;
+        }
+
+        .share-meta {
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .share-meta h2 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .share-meta-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .share-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .share-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 20px;
+            gap: 12px;
+            color: var(--text-secondary);
+        }
+
+        .share-error h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .share-error p {
+            font-size: 14px;
+            max-width: 360px;
+            line-height: 1.6;
+        }
+
+        .share-error .error-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .chat-open-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--accent-dim);
+            border: 1px solid var(--border-focus);
+            border-radius: var(--radius-sm);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: var(--transition);
+            margin-top: 8px;
+        }
+
+        .chat-open-link:hover {
+            background: var(--accent);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="authModal" style="display: none;">
+        <div class="auth-box">
+            <div class="auth-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <h2>Access Required</h2>
+            <p>Enter the access code to view this shared conversation.</p>
+            <input type="password" id="apiKeyInput" class="auth-input" placeholder="Enter access key">
+            <button id="authBtn" class="btn btn-primary auth-btn">Unlock</button>
+            <p id="authError" class="auth-error"></p>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="share-app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
+                    </svg>
+                </div>
+                <div class="header-title">
+                    <h1>Seattle Regulatory Friction Observatory</h1>
+                    <span class="header-subtitle">Shared conversation — read only</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="share-btn" title="Open the chat agent">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    Open Chat Agent
+                </a>
+            </div>
+        </header>
+
+        <!-- Conversation content -->
+        <main class="share-content" id="shareContent">
+            <!-- Populated by JS -->
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+    <script>
+    (function () {
+        const authModal  = document.getElementById('authModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const authBtn    = document.getElementById('authBtn');
+        const authError  = document.getElementById('authError');
+        const content    = document.getElementById('shareContent');
+
+        let apiKey = localStorage.getItem('rag_api_key') || '';
+
+        // Extract share_id from path: /share/{share_id}
+        const shareId = window.location.pathname.split('/share/')[1] || '';
+
+        function checkAuth() {
+            if (!apiKey) {
+                authModal.style.display = 'flex';
+            } else {
+                authModal.style.display = 'none';
+                loadShare();
+            }
+        }
+
+        authBtn.addEventListener('click', submitAuth);
+        apiKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitAuth();
+        });
+
+        function submitAuth() {
+            const key = apiKeyInput.value.trim();
+            if (!key) { authError.textContent = 'Please enter a key'; return; }
+            apiKey = key;
+            localStorage.setItem('rag_api_key', key);
+            checkAuth();
+        }
+
+        async function loadShare() {
+            content.innerHTML = '<div class="share-error"><p>Loading…</p></div>';
+
+            const res = await fetch(`/api/share/${shareId}`, {
+                headers: { 'x-api-key': apiKey }
+            });
+
+            if (res.status === 403) {
+                localStorage.removeItem('rag_api_key');
+                apiKey = '';
+                authError.textContent = 'Invalid access key.';
+                authModal.style.display = 'flex';
+                content.innerHTML = '';
+                return;
+            }
+
+            if (res.status === 410) {
+                renderError('Link expired', 'This shared conversation link has expired (links are valid for 30 days).');
+                return;
+            }
+
+            if (res.status === 404) {
+                renderError('Not found', 'This shared conversation link does not exist or has been removed.');
+                return;
+            }
+
+            if (!res.ok) {
+                renderError('Error', 'Something went wrong loading this conversation. Please try again.');
+                return;
+            }
+
+            const data = await res.json();
+            renderConversation(data);
+        }
+
+        function renderError(title, message) {
+            content.innerHTML = `
+                <div class="share-error">
+                    <div class="error-icon">&#128274;</div>
+                    <h3>${escapeHtml(title)}</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <a href="/" class="chat-open-link">Open Chat Agent</a>
+                </div>`;
+        }
+
+        function renderConversation(data) {
+            const sharedOn  = new Date(data.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            const expiresOn = new Date(data.expires_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+            let html = `
+                <div class="share-meta">
+                    <div class="share-badge">Shared conversation</div>
+                    <h2>${escapeHtml(data.title)}${data.title.length >= 80 ? '…' : ''}</h2>
+                    <div class="share-meta-sub">Shared on ${sharedOn} &nbsp;·&nbsp; Expires ${expiresOn}</div>
+                </div>`;
+
+            data.conversation.forEach(msg => {
+                const role = msg.role === 'user' ? 'user' : 'assistant';
+                const avatarLabel = role === 'user' ? 'U' : 'AI';
+                const bubbleContent = role === 'user'
+                    ? escapeHtml(msg.content)
+                    : renderMarkdown(msg.content);
+
+                html += `
+                    <div class="message message-${role}">
+                        <div class="message-avatar">${avatarLabel}</div>
+                        <div class="message-content">
+                            <div class="message-bubble">${bubbleContent}</div>
+                        </div>
+                    </div>`;
+            });
+
+            content.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (!text) return '';
+            try {
+                return DOMPurify.sanitize(marked.parse(text, { breaks: true }));
+            } catch (e) {
+                return escapeHtml(text);
+            }
+        }
+
+        checkAuth();
+    })();
+    </script>
+</body>
+</html>
