@@ -275,6 +275,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 1000);
 
+        // Streaming preview toggle
+        const streamingPreview = bubble.querySelector('.streaming-preview');
+        const expandBtn = bubble.querySelector('.thinking-expand-btn');
+        let isPreviewOpen = false;
+        if (expandBtn) {
+            expandBtn.addEventListener('click', () => {
+                isPreviewOpen = !isPreviewOpen;
+                streamingPreview.classList.toggle('open', isPreviewOpen);
+                expandBtn.classList.toggle('rotated', isPreviewOpen);
+                if (isPreviewOpen && fullText) {
+                    streamingPreview.textContent = fullText;
+                    streamingPreview.scrollTop = streamingPreview.scrollHeight;
+                }
+            });
+        }
+
         // Stream response (buffered — user only sees thinking)
         let fullText = '';
         let usageData = null;
@@ -283,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: text,
                     session_id: sessionId
                 }),
@@ -307,6 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const event = JSON.parse(line.slice(6));
                         if (event.type === 'token') {
                             fullText += event.data;
+                            // Live-update streaming preview if open
+                            if (isPreviewOpen && streamingPreview) {
+                                streamingPreview.textContent = fullText;
+                                streamingPreview.scrollTop = streamingPreview.scrollHeight;
+                            }
                         } else if (event.type === 'sources') {
                             if (event.data && event.data.length > 0) {
                                 renderSources(sourcesContainer, event.data);
@@ -535,14 +556,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function thinkingHTML() {
-        return `<div class="thinking-status">
-            <div class="thinking-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
+        return `<div class="thinking-wrapper">
+            <div class="thinking-status">
+                <div class="thinking-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <span class="thinking-label">Analyzing sources & forming response…</span>
+                <span class="thinking-elapsed">0s</span>
+                <button class="thinking-expand-btn" title="Preview response as it streams">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </button>
             </div>
-            <span class="thinking-label">Analyzing sources & forming response…</span>
-            <span class="thinking-elapsed">0s</span>
+            <div class="streaming-preview"></div>
         </div>`;
     }
 
