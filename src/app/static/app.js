@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3>Conversation shared</h3>
                 <p class="share-modal-sub">Link expires in 30 days. Only people you send it to can open it.</p>
                 <div class="share-url-row">
-                    <input class="share-url-input" type="text" value="${url}" readonly>
+                    <a class="share-url-link" href="${url}" target="_blank" rel="noopener">${url}</a>
                     <button class="btn btn-primary share-copy-btn" id="copyShareBtn">Copy</button>
                 </div>
                 <button class="btn btn-secondary share-close-btn" id="closeShareBtn">Close</button>
@@ -198,9 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('copyShareBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(url).then(() => {
-                const btn = document.getElementById('copyShareBtn');
-                btn.textContent = 'Copied!';
-                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                document.getElementById('copyShareBtn').textContent = 'Copied!';
+                setTimeout(() => { document.getElementById('copyShareBtn').textContent = 'Copy'; }, 2000);
             });
         });
 
