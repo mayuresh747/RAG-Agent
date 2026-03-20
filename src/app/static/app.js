@@ -511,9 +511,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const docViewerClose = document.getElementById('docViewerClose');
 
     function openDocumentViewer(library, filename, page) {
-        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}`;
+        const parsedPage = parseInt(page, 10);
+        const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${safePage}`;
         docViewerFrame.src = url;
-        docViewerTitle.textContent = `${filename} — p.${page}`;
+        docViewerTitle.textContent = `${filename} — p.${safePage}`;
         document.body.classList.add('doc-viewer-open');
     }
 
