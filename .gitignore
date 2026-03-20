@@ -59,3 +59,4 @@ scripts/test_*.py
 test_*.py
 *test_*.py
 scripts/fetch_shares.py
+CLAUDE.md
