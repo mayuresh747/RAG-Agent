@@ -316,6 +316,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (response.status === 429) {
+                clearInterval(thinkingTimer);
+                bubble.innerHTML = `<span style="color:var(--error)">Too many requests — please wait a moment before trying again.</span>`;
+                isStreaming = false;
+                sendBtn.disabled = !chatInput.value.trim();
+                return;
+            }
+
             if (!response.ok) {
                 clearInterval(thinkingTimer);
                 bubble.innerHTML = `<span style="color:var(--error)">Server error (${response.status}). Please try again.</span>`;
@@ -511,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const docViewerClose = document.getElementById('docViewerClose');
 
     function openDocumentViewer(library, filename, page) {
-        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}`;
+        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}&toolbar=0`;
         docViewerFrame.src = url;
         docViewerTitle.textContent = `${filename} — p.${page}`;
         document.body.classList.add('doc-viewer-open');

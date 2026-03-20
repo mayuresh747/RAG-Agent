@@ -7,11 +7,12 @@ import json
 import secrets
 import sqlite3
 import time
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, Depends, HTTPException, status, Security
+from fastapi import FastAPI, Depends, HTTPException, Request, status, Security
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import APIKeyHeader
@@ -92,6 +93,54 @@ def get_session_state(session_id: str) -> Dict:
     return sessions[session_id]
 
 
+# ── Rate Limiting ────────────────────────────────────────────────────────
+
+def _get_client_ip(request: Request) -> str:
+    """Extract real client IP, respecting X-Forwarded-For behind Caddy."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+class RateLimiter:
+    """Sliding-window per-IP rate limiter (in-memory, no dependencies)."""
+
+    def __init__(self, max_requests: int, window_seconds: int):
+        self.max_requests = max_requests
+        self.window = window_seconds
+        self._hits: Dict[str, list] = defaultdict(list)
+
+    def check(self, ip: str) -> None:
+        now = time.time()
+        cutoff = now - self.window
+        # Prune old timestamps
+        timestamps = self._hits[ip]
+        self._hits[ip] = [t for t in timestamps if t > cutoff]
+        if len(self._hits[ip]) >= self.max_requests:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded. Try again in {self.window} seconds.",
+            )
+        self._hits[ip].append(now)
+
+
+# Tiered limiters
+_chat_limiter = RateLimiter(max_requests=10, window_seconds=60)     # 10 req/min
+_share_limiter = RateLimiter(max_requests=5, window_seconds=60)     # 5 req/min
+_doc_limiter = RateLimiter(max_requests=30, window_seconds=60)      # 30 req/min
+
+
+async def rate_limit_chat(request: Request):
+    _chat_limiter.check(_get_client_ip(request))
+
+async def rate_limit_share(request: Request):
+    _share_limiter.check(_get_client_ip(request))
+
+async def rate_limit_documents(request: Request):
+    _doc_limiter.check(_get_client_ip(request))
+
+
 # ── Request / Response models ────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -119,7 +168,7 @@ async def serve_ui():
     return HTMLResponse(content=index_path.read_text(), status_code=200)
 
 
-@app.post("/api/chat", dependencies=[Depends(verify_api_key)])
+@app.post("/api/chat", dependencies=[Depends(verify_api_key), Depends(rate_limit_chat)])
 async def chat_endpoint(request: ChatRequest):
     """Stream a RAG-augmented chat response via SSE."""
     state = get_session_state(request.session_id)
@@ -238,7 +287,7 @@ async def clear_history(session_id: str):
 
 # ── Share endpoints ───────────────────────────────────────────────────────
 
-@app.post("/api/share", dependencies=[Depends(verify_api_key)])
+@app.post("/api/share", dependencies=[Depends(verify_api_key), Depends(rate_limit_share)])
 async def create_share(req: ShareRequest):
     """Save a conversation to disk and return a shareable link."""
     session = sessions.get(req.session_id)
@@ -320,7 +369,7 @@ def _resolve_document_path(library_key: str, filename: str):
     return resolved
 
 
-@app.get("/api/documents/{library_key}/{filename}")
+@app.get("/api/documents/{library_key}/{filename}", dependencies=[Depends(rate_limit_documents)])
 async def serve_document(library_key: str, filename: str):
     """Stream a PDF from disk for the document viewer."""
     path = _resolve_document_path(library_key, filename)
