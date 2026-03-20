@@ -7,7 +7,7 @@
     <meta name="description" content="AI-powered Seattle Regulatory Friction Observatory">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -69,8 +69,13 @@
         <header class="header">
             <div class="header-left">
                 <div class="logo">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
+                    <img src="/static/uw-logo.png" alt="UW" height="34"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                    <!-- Fallback SVG if image not yet copied to static/ -->
+                    <svg viewBox="0 0 72 54" xmlns="http://www.w3.org/2000/svg" style="display:none;width:100%;height:100%">
+                        <rect width="72" height="54" fill="white"/>
+                        <polygon fill="#b7a57a" points="2,4 20,4 30,46 36,26 42,46 52,4 70,4 56,50 43,50 36,32 29,50 16,50"/>
+                        <polygon fill="#4b2e83" points="6,7.5 18.5,7.5 29,43 36,26.5 43,43 53.5,7.5 66,7.5 54,47 43.5,47 36,30.5 28.5,47 18,47"/>
                     </svg>
                 </div>
                 <div class="header-title">
@@ -108,7 +113,7 @@
             <!-- Welcome Message -->
             <div class="welcome" id="welcome">
                 <div class="welcome-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
                         <path d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
                     </svg>
                 </div>

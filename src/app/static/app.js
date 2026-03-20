@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.innerHTML = `
             <div class="share-modal">
                 <h3>Conversation shared</h3>
-                <p class="share-modal-sub">Link expires in 30 days. Only people you send it to can open it.</p>
+                <p class="share-modal-sub">Anyone with this link can view this conversation.</p>
                 <div class="share-url-row">
                     <a class="share-url-link" href="${url}" target="_blank" rel="noopener">${url}</a>
                     <button class="btn btn-primary share-copy-btn" id="copyShareBtn">Copy</button>
@@ -275,19 +275,54 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 1000);
 
+        // Streaming preview toggle
+        const streamingPreview = bubble.querySelector('.streaming-preview');
+        const expandBtn = bubble.querySelector('.thinking-expand-btn');
+        let isPreviewOpen = false;
+        if (expandBtn) {
+            expandBtn.addEventListener('click', () => {
+                isPreviewOpen = !isPreviewOpen;
+                streamingPreview.classList.toggle('open', isPreviewOpen);
+                expandBtn.classList.toggle('rotated', isPreviewOpen);
+                if (isPreviewOpen && fullText) {
+                    streamingPreview.textContent = fullText;
+                    streamingPreview.scrollTop = streamingPreview.scrollHeight;
+                }
+            });
+        }
+
         // Stream response (buffered — user only sees thinking)
         let fullText = '';
         let usageData = null;
+        let streamError = null;
 
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: text,
                     session_id: sessionId
                 }),
             });
+
+            if (response.status === 401 || response.status === 403) {
+                clearInterval(thinkingTimer);
+                localStorage.removeItem('rag_api_key');
+                bubble.innerHTML = `<span style="color:var(--error)">Access denied — please reload and enter your access key.</span>`;
+                authModal.style.display = 'flex';
+                isStreaming = false;
+                sendBtn.disabled = !chatInput.value.trim();
+                return;
+            }
+
+            if (!response.ok) {
+                clearInterval(thinkingTimer);
+                bubble.innerHTML = `<span style="color:var(--error)">Server error (${response.status}). Please try again.</span>`;
+                isStreaming = false;
+                sendBtn.disabled = !chatInput.value.trim();
+                return;
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -307,6 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const event = JSON.parse(line.slice(6));
                         if (event.type === 'token') {
                             fullText += event.data;
+                            // Live-update streaming preview if open
+                            if (isPreviewOpen && streamingPreview) {
+                                streamingPreview.textContent = fullText;
+                                streamingPreview.scrollTop = streamingPreview.scrollHeight;
+                            }
                         } else if (event.type === 'sources') {
                             if (event.data && event.data.length > 0) {
                                 renderSources(sourcesContainer, event.data);
@@ -314,8 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else if (event.type === 'usage') {
                             usageData = event.data;
                         } else if (event.type === 'error') {
-                            clearInterval(thinkingTimer);
-                            bubble.innerHTML = `<span style="color: var(--error);">${event.data}</span>`;
+                            streamError = event.data;
                         }
                     } catch (e) {
                         // skip malformed
@@ -323,10 +362,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Reveal final markdown with fade-in
+            // Reveal final answer (or error)
             clearInterval(thinkingTimer);
+            if (streamError) {
+                bubble.innerHTML = `<span style="color:var(--error)">${escapeHtml(streamError)}</span>`;
+            } else {
+                bubble.innerHTML = renderMarkdown(fullText) || '<em style="color:var(--text-muted)">No response received.</em>';
+            }
+            // Add reveal AFTER innerHTML so the animation plays on the actual content
+            void bubble.offsetWidth; // force reflow so animation triggers cleanly
             bubble.classList.add('reveal');
-            bubble.innerHTML = renderMarkdown(fullText);
 
             // Show token usage if available
             if (usageData) {
@@ -416,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const header = document.createElement('div');
             header.className = 'source-header';
             header.innerHTML = `
+                <span class="source-num">${i + 1}</span>
                 <svg class="source-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 18l6-6-6-6"/>
                 </svg>
@@ -520,7 +566,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text) return '';
         try {
             const rawHtml = marked.parse(text, { breaks: true });
-            return DOMPurify.sanitize(rawHtml);
+            let clean = DOMPurify.sanitize(rawHtml);
+            // Wrap "Source N" / "source N" mentions into a citation badge
+            // $2 is guaranteed digits-only by \d+, so this is XSS-safe
+            clean = clean.replace(/\b([Ss]ource)\s+(\d+)\b/g,
+                '<span class="citation-ref">Source&nbsp;$2</span>');
+            return clean;
         } catch (e) {
             return escapeHtml(text);
         }
@@ -535,14 +586,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function thinkingHTML() {
-        return `<div class="thinking-status">
-            <div class="thinking-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
+        return `<div class="thinking-wrapper">
+            <div class="thinking-status">
+                <div class="thinking-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <span class="thinking-label">Searching corpus</span>
+                <span class="thinking-elapsed">0s</span>
+                <button class="thinking-expand-btn" title="Preview response as it streams">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                    Live
+                </button>
             </div>
-            <span class="thinking-label">Analyzing sources & forming response…</span>
-            <span class="thinking-elapsed">0s</span>
+            <div class="streaming-preview"></div>
         </div>`;
     }
 
