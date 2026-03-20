@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             viewBtn.textContent = 'View';
             viewBtn.title = 'View full document';
             viewBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // don't toggle the source expand
                 openDocumentViewer(s.library, s.source_file, s.page_number);
             });
             header.appendChild(viewBtn);
@@ -511,17 +511,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const docViewerClose = document.getElementById('docViewerClose');
 
     function openDocumentViewer(library, filename, page) {
-        const parsedPage = parseInt(page, 10);
-        const safePage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${safePage}`;
+        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}`;
         docViewerFrame.src = url;
-        docViewerTitle.textContent = `${filename} — p.${safePage}`;
+        docViewerTitle.textContent = `${filename} — p.${page}`;
         document.body.classList.add('doc-viewer-open');
     }
 
     function closeDocumentViewer() {
         document.body.classList.remove('doc-viewer-open');
-        docViewerFrame.src = '';
+        docViewerFrame.src = '';  // release PDF from browser memory
     }
 
     docViewerClose.addEventListener('click', closeDocumentViewer);

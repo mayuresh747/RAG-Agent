@@ -40,6 +40,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 SHARES_DB_PATH = Path("./data/shares.db")
 
 def init_shares_db():
+    SHARES_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(SHARES_DB_PATH)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS shared_conversations (

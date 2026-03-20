@@ -1494,6 +1494,7 @@ body.doc-viewer-open .doc-viewer {
     cursor: pointer;
     transition: var(--transition);
     white-space: nowrap;
+    margin-left: auto;
     flex-shrink: 0;
 }
 
