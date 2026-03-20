@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.innerHTML = `
             <div class="share-modal">
                 <h3>Conversation shared</h3>
-                <p class="share-modal-sub">Link expires in 30 days. Only people you send it to can open it.</p>
+                <p class="share-modal-sub">Anyone with this link can view this conversation.</p>
                 <div class="share-url-row">
                     <a class="share-url-link" href="${url}" target="_blank" rel="noopener">${url}</a>
                     <button class="btn btn-primary share-copy-btn" id="copyShareBtn">Copy</button>
