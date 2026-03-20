@@ -43,7 +43,7 @@ def init_shares_db():
         CREATE TABLE IF NOT EXISTS shared_conversations (
             share_id          TEXT PRIMARY KEY,
             created_at        TEXT NOT NULL,
-            expires_at        TEXT NOT NULL,
+            expires_at        TEXT,
             title             TEXT NOT NULL,
             conversation_json TEXT NOT NULL,
             message_count     INTEGER NOT NULL
@@ -237,7 +237,7 @@ async def clear_history(session_id: str):
 
 @app.post("/api/share", dependencies=[Depends(verify_api_key)])
 async def create_share(req: ShareRequest):
-    """Save a conversation to disk and return a shareable link (expires in 30 days)."""
+    """Save a conversation to disk and return a shareable link."""
     session = sessions.get(req.session_id)
     if not session or not session.get("conversation_history"):
         raise HTTPException(status_code=404, detail="Session not found or empty")
@@ -247,13 +247,12 @@ async def create_share(req: ShareRequest):
         (m["content"][:80] for m in history if m["role"] == "user"), "Untitled"
     )
     now = datetime.now(timezone.utc)
-    expires = now + timedelta(days=30)
     share_id = secrets.token_urlsafe(12)  # 16-char URL-safe random token
 
     conn = sqlite3.connect(SHARES_DB_PATH)
     conn.execute(
         "INSERT INTO shared_conversations VALUES (?, ?, ?, ?, ?, ?)",
-        (share_id, now.isoformat(), expires.isoformat(),
+        (share_id, now.isoformat(), None,
          title, json.dumps(history), len(history)),
     )
     conn.commit()
@@ -262,7 +261,7 @@ async def create_share(req: ShareRequest):
     return {"share_id": share_id, "share_url": f"/share/{share_id}"}
 
 
-@app.get("/api/share/{share_id}", dependencies=[Depends(verify_api_key)])
+@app.get("/api/share/{share_id}")
 async def get_share(share_id: str):
     """Retrieve a shared conversation by its ID."""
     conn = sqlite3.connect(SHARES_DB_PATH)
@@ -276,15 +275,16 @@ async def get_share(share_id: str):
     if not row:
         raise HTTPException(status_code=404, detail="Share not found")
 
-    expires_at = datetime.fromisoformat(row[3])
-    if datetime.now(timezone.utc) > expires_at:
-        raise HTTPException(status_code=410, detail="This link has expired")
+    # Check expiry only if expires_at was set (legacy rows)
+    if row[3]:
+        expires_at = datetime.fromisoformat(row[3])
+        if datetime.now(timezone.utc) > expires_at:
+            raise HTTPException(status_code=410, detail="This link has expired")
 
     return {
         "title": row[0],
         "conversation": json.loads(row[1]),
         "created_at": row[2],
-        "expires_at": row[3],
     }
 
 
