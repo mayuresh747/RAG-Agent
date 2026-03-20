@@ -130,23 +130,6 @@
     </style>
 </head>
 <body>
-    <!-- Auth Modal — identical to main app -->
-    <div class="auth-overlay" id="authModal" style="display: none;">
-        <div class="auth-box">
-            <div class="auth-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-            </div>
-            <h2>Access Required</h2>
-            <p>Enter the access code to view this shared conversation.</p>
-            <input type="password" id="apiKeyInput" class="auth-input" placeholder="Enter access key">
-            <button id="authBtn" class="btn btn-primary auth-btn">Unlock</button>
-            <p id="authError" class="auth-error"></p>
-        </div>
-    </div>
-
     <!-- Main Layout -->
     <div class="share-app">
         <!-- Header — identical structure to main app header -->
@@ -187,58 +170,15 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
     <script>
     (function () {
-        const authModal   = document.getElementById('authModal');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const authBtn     = document.getElementById('authBtn');
-        const authError   = document.getElementById('authError');
-        const content     = document.getElementById('shareContent');
-
-        let apiKey = localStorage.getItem('rag_api_key') || '';
-
+        const content = document.getElementById('shareContent');
         const shareId = window.location.pathname.split('/share/')[1] || '';
 
-        function checkAuth() {
-            if (!apiKey) {
-                authModal.style.display = 'flex';
-            } else {
-                authModal.style.display = 'none';
-                loadShare();
-            }
-        }
-
-        authBtn.addEventListener('click', submitAuth);
-        apiKeyInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') submitAuth();
-        });
-
-        function submitAuth() {
-            const key = apiKeyInput.value.trim();
-            if (!key) { authError.textContent = 'Please enter a key'; return; }
-            apiKey = key;
-            localStorage.setItem('rag_api_key', key);
-            checkAuth();
-        }
+        loadShare();
 
         async function loadShare() {
             content.innerHTML = '<div class="share-error"><p style="font-family:\'DM Mono\',monospace;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted)">Loading…</p></div>';
 
-            const res = await fetch(`/api/share/${shareId}`, {
-                headers: { 'x-api-key': apiKey }
-            });
-
-            if (res.status === 403) {
-                localStorage.removeItem('rag_api_key');
-                apiKey = '';
-                authError.textContent = 'Invalid access key.';
-                authModal.style.display = 'flex';
-                content.innerHTML = '';
-                return;
-            }
-
-            if (res.status === 410) {
-                renderError('Link expired', 'This shared conversation link has expired. Links are valid for 30 days.');
-                return;
-            }
+            const res = await fetch(`/api/share/${shareId}`);
 
             if (res.status === 404) {
                 renderError('Not found', 'This shared conversation link does not exist or has been removed.');
@@ -265,14 +205,13 @@
         }
 
         function renderConversation(data) {
-            const sharedOn  = new Date(data.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-            const expiresOn = new Date(data.expires_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            const sharedOn = new Date(data.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 
             let html = `
                 <div class="share-meta">
                     <div class="share-badge">Shared conversation</div>
                     <h2>${escapeHtml(data.title)}${data.title.length >= 80 ? '…' : ''}</h2>
-                    <div class="share-meta-sub">Shared on ${sharedOn} &nbsp;·&nbsp; Expires ${expiresOn}</div>
+                    <div class="share-meta-sub">Shared on ${sharedOn}</div>
                 </div>`;
 
             data.conversation.forEach(msg => {
@@ -315,8 +254,6 @@
                 return d.innerHTML;
             }
         }
-
-        checkAuth();
     })();
     </script>
 </body>
