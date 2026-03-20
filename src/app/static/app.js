@@ -471,6 +471,17 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             header.style.cursor = 'pointer';
 
+            // "View" button — opens the full PDF in the document viewer
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'view-doc-btn';
+            viewBtn.textContent = 'View';
+            viewBtn.title = 'View full document';
+            viewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDocumentViewer(s.library, s.source_file, s.page_number);
+            });
+            header.appendChild(viewBtn);
+
             const textBlock = document.createElement('div');
             textBlock.className = 'source-text';
             textBlock.textContent = s.text || '(no text available)';
@@ -492,6 +503,31 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(toggle);
         container.appendChild(list);
     }
+
+    // ── Document Viewer ────────────────────────────────────────────
+    const docViewer      = document.getElementById('docViewer');
+    const docViewerFrame = document.getElementById('docViewerFrame');
+    const docViewerTitle = document.getElementById('docViewerTitle');
+    const docViewerClose = document.getElementById('docViewerClose');
+
+    function openDocumentViewer(library, filename, page) {
+        const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}`;
+        docViewerFrame.src = url;
+        docViewerTitle.textContent = `${filename} — p.${page}`;
+        document.body.classList.add('doc-viewer-open');
+    }
+
+    function closeDocumentViewer() {
+        document.body.classList.remove('doc-viewer-open');
+        docViewerFrame.src = '';
+    }
+
+    docViewerClose.addEventListener('click', closeDocumentViewer);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('doc-viewer-open')) {
+            closeDocumentViewer();
+        }
+    });
 
     // ── Settings ──────────────────────────────────────────────────
     async function loadSettings() {

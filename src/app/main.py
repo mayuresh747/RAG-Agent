@@ -19,9 +19,11 @@ from pydantic import BaseModel, Field
 from typing import Dict, List
 
 from src.core.config import (
-    DEFAULT_SYSTEM_PROMPT, 
-    LLM_TEMPERATURE, 
-    API_ACCESS_KEY
+    DEFAULT_SYSTEM_PROMPT,
+    LLM_TEMPERATURE,
+    API_ACCESS_KEY,
+    LIBRARIES,
+    ALL_DOCUMENTS_DIR,
 )
 from src.core.rag_chain import chat_stream
 from src.core.session_logger import log_session
@@ -292,3 +294,39 @@ async def get_share(share_id: str):
 async def share_page(share_id: str):
     """Serve the read-only shared conversation view."""
     return FileResponse(str(STATIC_DIR / "share.html"))
+
+
+# ── Document serving ────────────────────────────────────────────────────
+
+def _resolve_document_path(library_key: str, filename: str):
+    """Locate a PDF on disk, validating against directory traversal."""
+    if library_key not in LIBRARIES:
+        return None
+    if "/" in filename or "\\" in filename or ".." in filename:
+        return None
+    if not filename.lower().endswith(".pdf"):
+        return None
+
+    lib_path = LIBRARIES[library_key]["path"]
+    matches = list(lib_path.rglob(filename))
+    if len(matches) != 1:
+        return None
+
+    resolved = matches[0].resolve()
+    if not str(resolved).startswith(str(ALL_DOCUMENTS_DIR.resolve())):
+        return None
+
+    return resolved
+
+
+@app.get("/api/documents/{library_key}/{filename}")
+async def serve_document(library_key: str, filename: str):
+    """Stream a PDF from disk for the document viewer."""
+    path = _resolve_document_path(library_key, filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return FileResponse(
+        str(path),
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline"},
+    )
