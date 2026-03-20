@@ -520,7 +520,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openDocumentViewer(library, filename, page) {
         const url = `/api/documents/${encodeURIComponent(library)}/${encodeURIComponent(filename)}#page=${page}&toolbar=0`;
-        docViewerFrame.src = url;
+        // Force reload even if same URL — clear first, then set on next frame
+        docViewerFrame.src = 'about:blank';
+        requestAnimationFrame(() => { docViewerFrame.src = url; });
         docViewerTitle.textContent = `${filename} — p.${page}`;
         document.body.classList.add('doc-viewer-open');
     }
