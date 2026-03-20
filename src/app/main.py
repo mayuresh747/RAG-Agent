@@ -308,11 +308,15 @@ def _resolve_document_path(library_key: str, filename: str):
         return None
 
     lib_path = LIBRARIES[library_key]["path"]
-    matches = list(lib_path.rglob(filename))
-    if len(matches) != 1:
+    it = lib_path.rglob(filename)
+    first_match = next(it, None)
+    if first_match is None:
+        return None
+    second_match = next(it, None)
+    if second_match is not None:
         return None
 
-    resolved = matches[0].resolve()
+    resolved = first_match.resolve()
     base_dir = ALL_DOCUMENTS_DIR.resolve()
     try:
         resolved.relative_to(base_dir)
