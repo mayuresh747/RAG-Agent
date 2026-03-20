@@ -40,19 +40,40 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # ── Shares DB ─────────────────────────────────────────────────────────────
 SHARES_DB_PATH = Path("./data/shares.db")
 
+_CREATE_SHARES_TABLE = """
+    CREATE TABLE IF NOT EXISTS shared_conversations (
+        share_id          TEXT PRIMARY KEY,
+        created_at        TEXT NOT NULL,
+        expires_at        TEXT,
+        title             TEXT NOT NULL,
+        conversation_json TEXT NOT NULL,
+        message_count     INTEGER NOT NULL
+    )
+"""
+
+def _get_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(SHARES_DB_PATH, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
 def init_shares_db():
     SHARES_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(SHARES_DB_PATH)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS shared_conversations (
-            share_id          TEXT PRIMARY KEY,
-            created_at        TEXT NOT NULL,
-            expires_at        TEXT,
-            title             TEXT NOT NULL,
-            conversation_json TEXT NOT NULL,
-            message_count     INTEGER NOT NULL
-        )
-    """)
+    conn = _get_conn()
+    conn.execute(_CREATE_SHARES_TABLE)
+    # Migrate old schema where expires_at had NOT NULL constraint
+    col_info = conn.execute("PRAGMA table_info(shared_conversations)").fetchall()
+    for col in col_info:
+        # col = (cid, name, type, notnull, dflt_value, pk)
+        if col[1] == "expires_at" and col[3] == 1:
+            conn.execute("ALTER TABLE shared_conversations RENAME TO _shares_old")
+            conn.execute(_CREATE_SHARES_TABLE)
+            conn.execute("""
+                INSERT INTO shared_conversations
+                SELECT share_id, created_at, NULL, title, conversation_json, message_count
+                FROM _shares_old
+            """)
+            conn.execute("DROP TABLE _shares_old")
+            break
     conn.commit()
     conn.close()
 
@@ -301,7 +322,7 @@ async def create_share(req: ShareRequest):
     now = datetime.now(timezone.utc)
     share_id = secrets.token_urlsafe(12)  # 16-char URL-safe random token
 
-    conn = sqlite3.connect(SHARES_DB_PATH)
+    conn = _get_conn()
     conn.execute(
         "INSERT INTO shared_conversations VALUES (?, ?, ?, ?, ?, ?)",
         (share_id, now.isoformat(), None,
@@ -316,7 +337,7 @@ async def create_share(req: ShareRequest):
 @app.get("/api/share/{share_id}")
 async def get_share(share_id: str):
     """Retrieve a shared conversation by its ID."""
-    conn = sqlite3.connect(SHARES_DB_PATH)
+    conn = _get_conn()
     row = conn.execute(
         "SELECT title, conversation_json, created_at, expires_at "
         "FROM shared_conversations WHERE share_id = ?",
