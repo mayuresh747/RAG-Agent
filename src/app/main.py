@@ -313,7 +313,10 @@ def _resolve_document_path(library_key: str, filename: str):
         return None
 
     resolved = matches[0].resolve()
-    if not str(resolved).startswith(str(ALL_DOCUMENTS_DIR.resolve())):
+    base_dir = ALL_DOCUMENTS_DIR.resolve()
+    try:
+        resolved.relative_to(base_dir)
+    except ValueError:
         return None
 
     return resolved
