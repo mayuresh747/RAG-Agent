@@ -178,6 +178,12 @@ class SettingsRequest(BaseModel):
 
 class ShareRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=100)
+    share_id: Optional[str] = Field(None, min_length=1, max_length=50, pattern=r'^[A-Za-z0-9_-]+$')
+
+
+class RestoreRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, max_length=100)
+    conversation: List[Dict]
 
 
 # ── Routes ───────────────────────────────────────────────────────────────
@@ -306,6 +312,18 @@ async def clear_history(session_id: str):
     }
 
 
+@app.post("/api/chat/restore", dependencies=[Depends(verify_api_key)])
+async def restore_history(req: RestoreRequest):
+    """Restore a saved conversation into a session so the AI retains context."""
+    state = get_session_state(req.session_id)
+    state["conversation_history"] = [
+        {"role": m["role"], "content": m["content"]}
+        for m in req.conversation
+        if m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)
+    ]
+    return {"status": "ok", "count": len(state["conversation_history"])}
+
+
 # ── Share endpoints ───────────────────────────────────────────────────────
 
 @app.post("/api/share", dependencies=[Depends(verify_api_key), Depends(rate_limit_share)])
@@ -320,18 +338,18 @@ async def create_share(req: ShareRequest):
         (m["content"][:80] for m in history if m["role"] == "user"), "Untitled"
     )
     now = datetime.now(timezone.utc)
-    share_id = secrets.token_urlsafe(12)  # 16-char URL-safe random token
+    share_id = req.share_id if req.share_id else secrets.token_urlsafe(12)
 
     conn = _get_conn()
     conn.execute(
-        "INSERT INTO shared_conversations VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO shared_conversations VALUES (?, ?, ?, ?, ?, ?)",
         (share_id, now.isoformat(), None,
          title, json.dumps(history), len(history)),
     )
     conn.commit()
     conn.close()
 
-    return {"share_id": share_id, "share_url": f"/share/{share_id}"}
+    return {"share_id": share_id, "share_url": f"/share/{share_id}", "title": title}
 
 
 @app.get("/api/share/{share_id}")
