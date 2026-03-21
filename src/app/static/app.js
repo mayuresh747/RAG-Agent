@@ -40,6 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('rag_session_id', sessionId);
     }
 
+    // ── Auto-save state ───────────────────────────────────────────
+    // Resets every page load so each visit gets its own history slot
+    let currentSaveId = sessionStorage.getItem('rag_current_save_id');
+    if (!currentSaveId) {
+        currentSaveId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+        sessionStorage.setItem('rag_current_save_id', currentSaveId);
+    }
+
+    // ── History panel refs ────────────────────────────────────────
+    const historyBtn     = document.getElementById('historyBtn');
+    const historyPanel   = document.getElementById('historyPanel');
+    const historyOverlay = document.getElementById('historyOverlay');
+    const historyClose   = document.getElementById('historyClose');
+    const historyList    = document.getElementById('historyList');
+    const historyClearBtn = document.getElementById('historyClearBtn');
+
     // ── Init ──────────────────────────────────────────────────────
     checkAuth();
     
@@ -210,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Clear chat ────────────────────────────────────────────────
     clearChat.addEventListener('click', async () => {
         try {
-            await fetch(`/api/chat/history?session_id=${sessionId}`, { 
+            await fetch(`/api/chat/history?session_id=${sessionId}`, {
                 method: 'DELETE',
                 headers: getHeaders()
             });
@@ -218,6 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
             chatArea.appendChild(welcome);
             welcome.style.display = 'flex';
             shareBtn.style.display = 'none';
+            // Start a fresh save slot for the next conversation
+            currentSaveId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+            sessionStorage.setItem('rag_current_save_id', currentSaveId);
         } catch (e) {
             console.error("Clear chat failed", e);
         }
@@ -380,6 +399,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add reveal AFTER innerHTML so the animation plays on the actual content
             void bubble.offsetWidth; // force reflow so animation triggers cleanly
             bubble.classList.add('reveal');
+
+            // Auto-save this session silently after each response
+            if (!streamError) autoSave();
 
             // Show token usage if available
             if (usageData) {
@@ -656,4 +678,141 @@ document.addEventListener('DOMContentLoaded', () => {
         const indicator = bubble.querySelector('.typing-indicator');
         if (indicator) indicator.remove();
     }
+
+    // ── Conversation history ──────────────────────────────────────
+
+    function getSessionTitle() {
+        const first = chatArea.querySelector('.message-user .message-bubble');
+        return first ? first.textContent.slice(0, 80) : 'Conversation';
+    }
+
+    function saveToHistory(id, title) {
+        let history = [];
+        try { history = JSON.parse(localStorage.getItem('rag_history') || '[]'); } catch (_) {}
+        const now = new Date().toISOString();
+        const idx = history.findIndex(e => e.id === id);
+        if (idx >= 0) {
+            history[idx] = { id, title, saved_at: now };
+        } else {
+            history.unshift({ id, title, saved_at: now });
+        }
+        // Keep newest 100
+        if (history.length > 100) history = history.slice(0, 100);
+        localStorage.setItem('rag_history', JSON.stringify(history));
+    }
+
+    function relativeTime(iso) {
+        const diff = Date.now() - new Date(iso).getTime();
+        const m = Math.floor(diff / 60000);
+        const h = Math.floor(diff / 3600000);
+        const d = Math.floor(diff / 86400000);
+        if (m < 1)  return 'just now';
+        if (m < 60) return `${m}m ago`;
+        if (h < 24) return `${h}h ago`;
+        if (d < 7)  return `${d}d ago`;
+        return new Date(iso).toLocaleDateString();
+    }
+
+    function renderHistoryPanel() {
+        let history = [];
+        try { history = JSON.parse(localStorage.getItem('rag_history') || '[]'); } catch (_) {}
+        if (!history.length) {
+            historyList.innerHTML = '<div class="history-empty">No saved conversations yet.<br>They appear here automatically<br>as you chat.</div>';
+            return;
+        }
+        historyList.innerHTML = history.map(entry => `
+            <div class="history-item${entry.id === currentSaveId ? ' active' : ''}"
+                 data-id="${escapeHtml(entry.id)}">
+                <div class="history-item-title">${escapeHtml(entry.title)}</div>
+                <div class="history-item-meta">${relativeTime(entry.saved_at)}</div>
+            </div>
+        `).join('');
+        historyList.querySelectorAll('.history-item').forEach(el => {
+            el.addEventListener('click', () => loadHistoryConversation(el.dataset.id));
+        });
+    }
+
+    async function loadHistoryConversation(id) {
+        closeHistoryPanel();
+        try {
+            const res = await fetch(`/api/share/${id}`);
+            if (!res.ok) throw new Error('Not found');
+            const data = await res.json();
+
+            // Restore backend session so AI has full context
+            await fetch('/api/chat/restore', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ session_id: sessionId, conversation: data.conversation }),
+            });
+
+            // Clear chat UI
+            chatArea.innerHTML = '';
+            chatArea.appendChild(welcome);
+            welcome.style.display = 'none';
+            shareBtn.style.display = 'inline-flex';
+
+            // Render all messages
+            data.conversation.forEach(msg => addMessage(msg.role, msg.content));
+
+            // Future auto-saves update this same slot
+            currentSaveId = id;
+            sessionStorage.setItem('rag_current_save_id', currentSaveId);
+
+            scrollToBottom();
+        } catch (e) {
+            console.error('Failed to load conversation', e);
+        }
+    }
+
+    function openHistoryPanel() {
+        renderHistoryPanel();
+        historyPanel.classList.add('open');
+        historyOverlay.classList.add('open');
+    }
+
+    function closeHistoryPanel() {
+        historyPanel.classList.remove('open');
+        historyOverlay.classList.remove('open');
+    }
+
+    historyBtn.addEventListener('click', openHistoryPanel);
+    historyClose.addEventListener('click', closeHistoryPanel);
+    historyOverlay.addEventListener('click', closeHistoryPanel);
+
+    historyClearBtn.addEventListener('click', () => {
+        localStorage.removeItem('rag_history');
+        renderHistoryPanel();
+    });
+
+    // ── Auto-save ─────────────────────────────────────────────────
+
+    async function autoSave() {
+        if (!apiKey || !currentSaveId) return;
+        if (!chatArea.querySelector('.message-user')) return;
+        try {
+            const res = await fetch('/api/share', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ session_id: sessionId, share_id: currentSaveId }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                saveToHistory(currentSaveId, data.title || getSessionTitle());
+            }
+        } catch (_) {}
+    }
+
+    // Final save when user closes/switches tab
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && apiKey && currentSaveId) {
+            if (!chatArea.querySelector('.message-user')) return;
+            fetch('/api/share', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ session_id: sessionId, share_id: currentSaveId }),
+                keepalive: true,
+            }).catch(() => {});
+        }
+    });
 });

@@ -84,6 +84,12 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button class="icon-btn" id="historyBtn" title="Conversation history">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </button>
                 <button class="share-btn" id="shareBtn" title="Share conversation" style="display:none;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -146,6 +152,24 @@
             <p class="input-hint">GPT 5.1 · Searches 399K+ legal document chunks across 8 libraries</p>
         </footer>
     </div>
+
+    <!-- History Panel -->
+    <div class="history-overlay" id="historyOverlay"></div>
+    <aside class="history-panel" id="historyPanel">
+        <div class="history-panel-header">
+            <h2>Conversations</h2>
+            <button class="sidebar-close" id="historyClose" aria-label="Close history">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="history-list" id="historyList"><!-- populated by app.js --></div>
+        <div class="history-footer">
+            <button class="history-clear-btn" id="historyClearBtn">Clear history</button>
+        </div>
+    </aside>
 
     <!-- Document Viewer Panel -->
     <div class="doc-viewer" id="docViewer">
