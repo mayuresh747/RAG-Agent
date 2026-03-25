@@ -60,3 +60,9 @@ test_*.py
 *test_*.py
 scripts/fetch_shares.py
 CLAUDE.md
+.codex/
+
+# Research and Documentation
+SPC Research.pdf
+docs/*
+!docs/site/
