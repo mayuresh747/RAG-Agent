@@ -39,7 +39,7 @@
   --font-mono: 'JetBrains Mono', monospace;
   --max-text: 720px;
   --max-wide: 1100px;
-  --section-gap: 120px;
+  --section-gap: 96px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -209,12 +209,12 @@ nav, section, footer { position: relative; z-index: 1; }
   background-position: center;
   filter: grayscale(100%);
   opacity: 0.40;
-  animation: heroZoom 20s ease-in-out infinite alternate;
+  animation: heroZoom 8s ease-in-out infinite alternate;
 }
 
 @keyframes heroZoom {
   0% { transform: scale(1); }
-  100% { transform: scale(1.10); }
+  100% { transform: scale(1.30); }
 }
 
 .hero-bg-overlay {
@@ -385,9 +385,17 @@ nav, section, footer { position: relative; z-index: 1; }
 
 /* Hierarchy Diagram */
 .hierarchy-wrapper {
-  max-width: 700px;
+  max-width: 1100px;
   margin: 0 auto;
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .hierarchy-wrapper { grid-template-columns: 1fr; }
+  .h-tooltip-anchor { display: none; }
 }
 
 .hierarchy-svg {
@@ -413,20 +421,60 @@ nav, section, footer { position: relative; z-index: 1; }
 .hierarchy-node text {
   font-family: var(--font-heading);
   fill: var(--text-primary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .hierarchy-node .node-desc {
   font-family: var(--font-body);
   fill: var(--text-secondary);
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 400;
 }
 .hierarchy-line {
-  stroke: var(--border);
+  stroke: var(--border-light);
   stroke-width: 1.5;
   fill: none;
-  stroke-dasharray: 6 4;
+}
+
+/* Hierarchy tooltip anchor (right column) */
+.h-tooltip-anchor {
+  position: relative;
+}
+
+/* Hierarchy tooltips */
+.h-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #1a1d26;
+  color: #e8e6e3;
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.h-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.h-tooltip .tt-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #a8b8f0;
+  margin-bottom: 6px;
+}
+.h-tooltip .tt-body {
+  color: #c0bfbc;
+  font-size: 0.78rem;
 }
 .hierarchy-line.animate-line {
   stroke: var(--teal);
@@ -675,14 +723,18 @@ nav, section, footer { position: relative; z-index: 1; }
   overflow-x: auto;
 }
 
-.pipeline-svg { width: 100%; height: auto; min-width: 700px; }
+.pipeline-svg { width: 100%; height: auto; min-width: 840px; }
 
 .pipeline-node rect {
   fill: var(--bg-card);
   stroke: var(--border);
   stroke-width: 1.5;
   rx: 10;
-  transition: all 0.3s ease;
+  transition: stroke 0.4s ease, stroke-width 0.4s ease;
+}
+.pipeline-node.glow rect {
+  stroke: var(--teal);
+  stroke-width: 2;
 }
 .pipeline-node:hover rect {
   stroke: var(--teal);
@@ -1049,7 +1101,7 @@ footer a:hover { text-decoration: underline; }
   <div class="container">
     <p class="section-label animate-in">Why This Matters</p>
     <h2 class="section-title animate-in">The Policy Document Problem</h2>
-    <p class="section-desc animate-in">Government agencies produce thousands of interconnected policy documents. They're critical for compliance — and nearly impossible for AI to navigate accurately.</p>
+    <p class="section-desc animate-in">Government agencies produce thousands of interconnected policy documents. They're critical for compliance, and nearly impossible for AI to navigate accurately.</p>
 
     <div class="challenge-grid">
       <div class="challenge-card animate-in stagger-1">
@@ -1084,79 +1136,99 @@ footer a:hover { text-decoration: underline; }
 
     <!-- Source Authority Hierarchy -->
     <div class="hierarchy-wrapper animate-in">
-      <svg class="hierarchy-svg" viewBox="0 0 700 440" xmlns="http://www.w3.org/2000/svg">
-        <!-- Connections -->
-        <line class="hierarchy-line animate-line" x1="350" y1="55" x2="200" y2="105"/>
-        <line class="hierarchy-line animate-line" x1="350" y1="55" x2="500" y2="105"/>
-        <line class="hierarchy-line animate-line" x1="200" y1="145" x2="200" y2="185"/>
-        <line class="hierarchy-line animate-line" x1="500" y1="145" x2="500" y2="185"/>
-        <line class="hierarchy-line animate-line" x1="200" y1="225" x2="350" y2="265"/>
-        <line class="hierarchy-line animate-line" x1="500" y1="225" x2="350" y2="265"/>
-        <line class="hierarchy-line animate-line" x1="350" y1="305" x2="350" y2="335"/>
-        <line class="hierarchy-line animate-line" x1="350" y1="375" x2="200" y2="405"/>
-        <line class="hierarchy-line animate-line" x1="350" y1="375" x2="500" y2="405"/>
+      <svg class="hierarchy-svg" viewBox="0 0 680 580" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#8b8f9e"/>
+          </marker>
+        </defs>
 
-        <!-- State Constitution (top) -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.1s">
-          <rect x="270" y="20" width="160" height="40" stroke-dasharray="6 3"/>
-          <text x="350" y="38" text-anchor="middle" class="node-title" font-size="10">State Constitution</text>
-          <text x="350" y="52" text-anchor="middle" class="node-desc">Background authority</text>
+        <!-- ===== CONNECTIONS (matching PDF exactly) ===== -->
+        <!-- Constitution → RCW (down) -->
+        <line x1="200" y1="70" x2="200" y2="100" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- RCW → WAC (right) -->
+        <line x1="340" y1="140" x2="390" y2="140" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- RCW → SMC (down) -->
+        <line x1="200" y1="175" x2="200" y2="210" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- SMC → DIR Rules (right) -->
+        <line x1="340" y1="250" x2="390" y2="250" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- SMC → IBC (orthogonal: down then right) -->
+        <path d="M 200 285 L 200 345 L 390 345" fill="none" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <!-- SMC → SPU (orthogonal: down then right) -->
+        <path d="M 200 285 L 200 440 L 390 440" fill="none" stroke="#cdd1da" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- ===== NODES ===== -->
+        <!-- State Constitution -->
+        <g class="hierarchy-node" data-tooltip="constitution">
+          <rect x="60" y="20" width="280" height="50" stroke-dasharray="6 3"/>
+          <text x="200" y="43" text-anchor="middle" class="node-title">State Constitution</text>
+          <text x="200" y="60" text-anchor="middle" class="node-desc">Not in corpus &mdash; background authority</text>
         </g>
 
         <!-- RCW -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.2s">
-          <rect x="110" y="100" width="180" height="50"/>
-          <text x="200" y="122" text-anchor="middle" class="node-title">RCW</text>
-          <text x="200" y="138" text-anchor="middle" class="node-desc">State statutes &middot; ~2,800 chapters</text>
+        <g class="hierarchy-node" data-tooltip="rcw">
+          <rect x="60" y="105" width="280" height="70"/>
+          <text x="200" y="135" text-anchor="middle" class="node-title">RCW (Revised Code of Washington)</text>
+          <text x="200" y="155" text-anchor="middle" class="node-desc">State Legislature enacts statutes</text>
         </g>
 
         <!-- WAC -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.3s">
-          <rect x="410" y="100" width="180" height="50"/>
-          <text x="500" y="122" text-anchor="middle" class="node-title">WAC</text>
-          <text x="500" y="138" text-anchor="middle" class="node-desc">Agency rules &middot; ~3,000 chapters</text>
+        <g class="hierarchy-node" data-tooltip="wac">
+          <rect x="395" y="105" width="270" height="70"/>
+          <text x="530" y="135" text-anchor="middle" class="node-title">WAC (Washington Admin Code)</text>
+          <text x="530" y="155" text-anchor="middle" class="node-desc">State agencies implement RCW via rules</text>
         </g>
 
         <!-- SMC -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.4s">
-          <rect x="110" y="185" width="180" height="50"/>
-          <text x="200" y="207" text-anchor="middle" class="node-title">SMC</text>
-          <text x="200" y="223" text-anchor="middle" class="node-desc">Seattle Municipal Code &middot; 22 titles</text>
+        <g class="hierarchy-node" data-tooltip="smc">
+          <rect x="60" y="215" width="280" height="70"/>
+          <text x="200" y="245" text-anchor="middle" class="node-title">SMC (Seattle Municipal Code)</text>
+          <text x="200" y="265" text-anchor="middle" class="node-desc">City Council enacts local ordinances</text>
         </g>
 
         <!-- DIR Rules -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.5s">
-          <rect x="410" y="185" width="180" height="50"/>
-          <text x="500" y="207" text-anchor="middle" class="node-title">DIR Rules</text>
-          <text x="500" y="223" text-anchor="middle" class="node-desc">Director&apos;s Rules &middot; 179 PDFs</text>
+        <g class="hierarchy-node" data-tooltip="dir">
+          <rect x="395" y="215" width="270" height="70"/>
+          <text x="530" y="245" text-anchor="middle" class="node-title">DIR Rules</text>
+          <text x="530" y="265" text-anchor="middle" class="node-desc">City departments interpret &amp; implement SMC</text>
         </g>
 
         <!-- IBC -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.6s">
-          <rect x="260" y="265" width="180" height="50"/>
-          <text x="350" y="287" text-anchor="middle" class="node-title">IBC (Building Codes)</text>
-          <text x="350" y="303" text-anchor="middle" class="node-desc">Adopted by reference &middot; 7 codes</text>
+        <g class="hierarchy-node" data-tooltip="ibc">
+          <rect x="395" y="310" width="270" height="70"/>
+          <text x="530" y="340" text-anchor="middle" class="node-title">IBC (Building Codes)</text>
+          <text x="530" y="360" text-anchor="middle" class="node-desc">Adopted by reference into SMC/RCW</text>
         </g>
 
         <!-- SPU -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.7s">
-          <rect x="260" y="340" width="180" height="50"/>
-          <text x="350" y="362" text-anchor="middle" class="node-title">SPU Design Standards</text>
-          <text x="350" y="378" text-anchor="middle" class="node-desc">Engineering standards &middot; 14 volumes</text>
+        <g class="hierarchy-node" data-tooltip="spu">
+          <rect x="395" y="405" width="270" height="70"/>
+          <text x="530" y="435" text-anchor="middle" class="node-title">SPU Design Standards</text>
+          <text x="530" y="455" text-anchor="middle" class="node-desc">Engineering standards under SMC authority</text>
         </g>
 
         <!-- Governor's Orders -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.8s">
-          <rect x="80" y="400" width="200" height="35"/>
-          <text x="180" y="422" text-anchor="middle" class="node-title" font-size="10">Governor&apos;s Executive Orders</text>
+        <g class="hierarchy-node" data-tooltip="gov">
+          <rect x="30" y="510" width="290" height="55"/>
+          <text x="175" y="535" text-anchor="middle" class="node-title">Governor&apos;s Executive Orders</text>
+          <text x="175" y="553" text-anchor="middle" class="node-desc">Executive directives, direct state agencies</text>
         </g>
 
         <!-- Court Opinions -->
-        <g class="hierarchy-node animate-in" style="transition-delay:0.9s">
-          <rect x="420" y="400" width="200" height="35"/>
-          <text x="520" y="422" text-anchor="middle" class="node-title" font-size="10">Washington Court Opinions</text>
+        <g class="hierarchy-node" data-tooltip="court">
+          <rect x="365" y="510" width="290" height="55"/>
+          <text x="510" y="535" text-anchor="middle" class="node-title">Washington Court Opinions</text>
+          <text x="510" y="553" text-anchor="middle" class="node-desc">Judicial interpretation of all sources</text>
         </g>
       </svg>
+
+      <!-- Tooltip (right column) -->
+      <div class="h-tooltip-anchor">
+        <div class="h-tooltip" id="hTooltip">
+          <div class="tt-title"></div>
+          <div class="tt-body"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1371,10 +1443,10 @@ footer a:hover { text-decoration: underline; }
   <div class="container">
     <p class="section-label animate-in">System Architecture</p>
     <h2 class="section-title animate-in">The RAG Pipeline</h2>
-    <p class="section-desc animate-in">Every query flows through this pipeline — from natural language question to cited, streamed response.</p>
+    <p class="section-desc animate-in">Every query flows through this pipeline, from a natural language question to a cited, streamed response.</p>
 
     <div class="pipeline-wrapper animate-in">
-      <svg class="pipeline-svg" viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+      <svg class="pipeline-svg" viewBox="0 0 1050 200" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#8b8f9e"/>
@@ -1387,16 +1459,16 @@ footer a:hover { text-decoration: underline; }
         </defs>
 
         <!-- Flow line -->
-        <path id="flowPath" d="M 65 100 L 175 100 L 285 100 L 395 100 L 505 100 L 615 100 L 725 100 L 835 100" fill="none" stroke="#cdd1da" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrowhead)"/>
+        <path id="flowPath" d="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100" fill="none" stroke="#cdd1da" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrowhead)"/>
 
         <!-- Animated packet -->
         <circle class="pipeline-packet" r="5" fill="var(--teal)" opacity="0">
-          <animateMotion dur="4s" repeatCount="indefinite" path="M 65 100 L 175 100 L 285 100 L 395 100 L 505 100 L 615 100 L 725 100 L 835 100"/>
-          <animate attributeName="opacity" values="0;1;1;1;1;1;1;0" dur="4s" repeatCount="indefinite"/>
+          <animateMotion dur="5s" repeatCount="indefinite" path="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100"/>
+          <animate attributeName="opacity" values="0;1;1;1;1;1;0" dur="5s" repeatCount="indefinite"/>
         </circle>
         <circle r="3" fill="var(--teal)" opacity="0">
-          <animateMotion dur="4s" repeatCount="indefinite" begin="0.3s" path="M 65 100 L 175 100 L 285 100 L 395 100 L 505 100 L 615 100 L 725 100 L 835 100"/>
-          <animate attributeName="opacity" values="0;0.5;0.5;0.5;0.5;0.5;0.5;0" dur="4s" repeatCount="indefinite" begin="0.3s"/>
+          <animateMotion dur="5s" repeatCount="indefinite" begin="0.4s" path="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100"/>
+          <animate attributeName="opacity" values="0;0.5;0.5;0.5;0.5;0.5;0" dur="5s" repeatCount="indefinite" begin="0.4s"/>
         </circle>
 
         <!-- Nodes -->
@@ -1406,34 +1478,34 @@ footer a:hover { text-decoration: underline; }
           <text x="65" y="114" text-anchor="middle" class="node-sub">User question</text>
         </g>
         <g class="pipeline-node">
-          <rect x="135" y="70" width="110" height="60"/>
-          <text x="190" y="96" text-anchor="middle" class="node-title">Classifier</text>
-          <text x="190" y="114" text-anchor="middle" class="node-sub">gpt-4o-mini</text>
+          <rect x="145" y="70" width="110" height="60"/>
+          <text x="200" y="96" text-anchor="middle" class="node-title">Classifier</text>
+          <text x="200" y="114" text-anchor="middle" class="node-sub">gpt-4o-mini</text>
         </g>
         <g class="pipeline-node">
-          <rect x="260" y="70" width="110" height="60"/>
-          <text x="315" y="96" text-anchor="middle" class="node-title">Router</text>
-          <text x="315" y="114" text-anchor="middle" class="node-sub">~300 keyword rules</text>
+          <rect x="295" y="70" width="110" height="60"/>
+          <text x="350" y="96" text-anchor="middle" class="node-title">Router</text>
+          <text x="350" y="114" text-anchor="middle" class="node-sub">~300 keyword rules</text>
         </g>
         <g class="pipeline-node">
-          <rect x="385" y="70" width="110" height="60"/>
-          <text x="440" y="96" text-anchor="middle" class="node-title">Embed</text>
-          <text x="440" y="114" text-anchor="middle" class="node-sub">text-embed-3-large</text>
+          <rect x="445" y="70" width="110" height="60"/>
+          <text x="500" y="96" text-anchor="middle" class="node-title">Embed</text>
+          <text x="500" y="114" text-anchor="middle" class="node-sub">text-embed-3-large</text>
         </g>
         <g class="pipeline-node">
-          <rect x="510" y="70" width="110" height="60"/>
-          <text x="565" y="96" text-anchor="middle" class="node-title">Search</text>
-          <text x="565" y="114" text-anchor="middle" class="node-sub">ChromaDB &middot; top-25</text>
+          <rect x="595" y="70" width="110" height="60"/>
+          <text x="650" y="96" text-anchor="middle" class="node-title">Search</text>
+          <text x="650" y="114" text-anchor="middle" class="node-sub">ChromaDB &middot; top-25</text>
         </g>
         <g class="pipeline-node">
-          <rect x="635" y="70" width="110" height="60"/>
-          <text x="690" y="96" text-anchor="middle" class="node-title">Generate</text>
-          <text x="690" y="114" text-anchor="middle" class="node-sub">GPT-5.1 &middot; SSE</text>
+          <rect x="745" y="70" width="110" height="60"/>
+          <text x="800" y="96" text-anchor="middle" class="node-title">Generate</text>
+          <text x="800" y="114" text-anchor="middle" class="node-sub">GPT-5.1 &middot; SSE</text>
         </g>
         <g class="pipeline-node">
-          <rect x="760" y="70" width="110" height="60"/>
-          <text x="815" y="96" text-anchor="middle" class="node-title">Response</text>
-          <text x="815" y="114" text-anchor="middle" class="node-sub">Cited &middot; streamed</text>
+          <rect x="895" y="70" width="110" height="60"/>
+          <text x="950" y="96" text-anchor="middle" class="node-title">Response</text>
+          <text x="950" y="114" text-anchor="middle" class="node-sub">Cited &middot; streamed</text>
         </g>
       </svg>
     </div>
@@ -1486,7 +1558,7 @@ footer a:hover { text-decoration: underline; }
   <div class="container">
     <p class="section-label animate-in">Evaluation Framework</p>
     <h2 class="section-title animate-in">Query Taxonomy</h2>
-    <p class="section-desc animate-in">Six levels of complexity, from simple factual lookups to adversarial edge cases — designed to stress-test every aspect of the system.</p>
+    <p class="section-desc animate-in">Six levels of complexity, from simple factual lookups to adversarial edge cases, designed to stress-test every aspect of the system.</p>
 
     <div class="taxonomy-tabs animate-in" role="tablist">
       <button class="tax-tab active" onclick="showTab(0)" role="tab" aria-selected="true">L1 Factual</button>
@@ -1510,7 +1582,7 @@ footer a:hover { text-decoration: underline; }
         </tbody></table>
         <div class="tax-principles"><h4>Design Principles</h4><ul>
           <li>Answer findable in one chunk regardless of chunking strategy</li>
-          <li>Expected difficulty: Low — serves as a sanity check</li>
+          <li>Expected difficulty: Low - serves as a sanity check</li>
         </ul></div>
       </div>
 
@@ -1631,7 +1703,7 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <p class="results-note animate-in stagger-3">
-      The bare LLM consistently ignores localized Seattle/WA State facts, relying on generalized knowledge of U.S. zoning and planning laws. Multi-hop reasoning queries (L4) show a <strong style="color:var(--red)">90% hallucination rate</strong> — the model confidently fabricates plausible but incorrect answers. This establishes the baseline that RAG augmentation must improve upon.
+      The bare LLM consistently ignores localized Seattle/WA State facts, relying on generalized knowledge of U.S. zoning and planning laws. Multi-hop reasoning queries (L4) show a <strong style="color:var(--red)">90% hallucination rate</strong>, the model confidently fabricates plausible but incorrect answers. This establishes the baseline that RAG augmentation must improve upon.
     </p>
   </div>
 </section>
@@ -1706,10 +1778,20 @@ function animateCounter(el) {
   requestAnimationFrame(update);
 }
 
-// ===== Research Question Toggle =====
+// ===== Research Question Toggle (row-synced) =====
 function toggleRQ(header) {
   const card = header.closest('.rq-card');
-  card.classList.toggle('open');
+  const grid = card.closest('.rq-grid');
+  const cards = Array.from(grid.querySelectorAll('.rq-card'));
+  const idx = cards.indexOf(card);
+  // 3 cards per row: row 0 = indices 0,1,2; row 1 = indices 3,4,5
+  const rowStart = Math.floor(idx / 3) * 3;
+  const rowCards = cards.slice(rowStart, rowStart + 3);
+  const isOpen = card.classList.contains('open');
+  rowCards.forEach(function(c) {
+    if (isOpen) { c.classList.remove('open'); }
+    else { c.classList.add('open'); }
+  });
 }
 
 // ===== Phase Timeline =====
@@ -1924,6 +2006,26 @@ const navObserver = new IntersectionObserver((entries) => {
 
 sections.forEach(s => navObserver.observe(s));
 
+// ===== Pipeline node glow animation =====
+(function() {
+  var nodes = document.querySelectorAll('.pipeline-node');
+  if (!nodes.length) return;
+  var dur = 5000; // match SVG animateMotion dur
+  var count = nodes.length;
+  var interval = dur / count;
+
+  function glowCycle() {
+    nodes.forEach(function(n, i) {
+      setTimeout(function() {
+        n.classList.add('glow');
+        setTimeout(function() { n.classList.remove('glow'); }, interval * 0.8);
+      }, i * interval);
+    });
+  }
+  glowCycle();
+  setInterval(glowCycle, dur);
+})();
+
 // ===== B1: Drifting background nodes =====
 (function() {
   const c = document.getElementById('bg-nodes');
@@ -1943,14 +2045,25 @@ sections.forEach(s => navObserver.observe(s));
     ctx.setTransform(2, 0, 0, 2, 0, 0);
   }
 
+  // Side margin zone: nodes only spawn in the left/right edges
+  function sideX() {
+    var margin = Math.min(250, W * 0.22);
+    // 50/50 chance left or right side
+    if (Math.random() < 0.5) {
+      return Math.random() * margin; // left side
+    } else {
+      return W - Math.random() * margin; // right side
+    }
+  }
+
   function init() {
     resize();
     nodes = [];
     for (let i = 0; i < NODE_COUNT; i++) {
       nodes.push({
-        x: Math.random() * W,
+        x: sideX(),
         y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.25,
+        vx: (Math.random() - 0.5) * 0.2,
         vy: (Math.random() - 0.5) * 0.25,
         r: 2 + Math.random() * 2
       });
@@ -1959,10 +2072,9 @@ sections.forEach(s => navObserver.observe(s));
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    // Skip drawing over hero area (hero has its own background)
-    const heroBottom = document.getElementById('hero')?.getBoundingClientRect().bottom || 0;
-    const scrollY = window.scrollY || 0;
-    const heroEnd = heroBottom + scrollY;
+    var margin = Math.min(250, W * 0.22);
+    var leftEdge = margin;
+    var rightEdge = W - margin;
 
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
@@ -1983,8 +2095,15 @@ sections.forEach(s => navObserver.observe(s));
     nodes.forEach(function(n) {
       n.x += n.vx;
       n.y += n.vy;
-      if (n.x < 0 || n.x > W) n.vx *= -1;
+      // Bounce off screen edges
+      if (n.x < 0) { n.x = 0; n.vx *= -1; }
+      if (n.x > W) { n.x = W; n.vx *= -1; }
       if (n.y < 0 || n.y > H) n.vy *= -1;
+      // Push back from center zone
+      if (n.x > leftEdge && n.x < rightEdge) {
+        if (n.x < W / 2) { n.vx = -Math.abs(n.vx); }
+        else { n.vx = Math.abs(n.vx); }
+      }
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(44,74,138,0.10)';
@@ -1997,6 +2116,53 @@ sections.forEach(s => navObserver.observe(s));
   init();
   draw();
   window.addEventListener('resize', function() { resize(); });
+})();
+
+// ===== Hierarchy tooltips =====
+(function() {
+  var tooltipData = {
+    constitution: { title: 'State Constitution', body: 'The supreme law of Washington State. Every statute, regulation, and local ordinance must comply. Sets the foundation for all government authority in the hierarchy below.' },
+    rcw: { title: 'Revised Code of Washington', body: 'State statutes enacted by the Legislature. Sets the minimum standards that all cities and agencies must follow. WAC rules implement these statutes, and SMC cannot contradict them.' },
+    wac: { title: 'Washington Administrative Code', body: 'Rules written by state agencies to implement RCW statutes. Agencies cannot exceed the authority granted by their enabling statute. Bridges the gap between legislative intent and on-the-ground regulation.' },
+    smc: { title: 'Seattle Municipal Code', body: 'City ordinances enacted by Seattle City Council. Can exceed but never contradict state law. Covers zoning, building, land use, labor, and safety across the city.' },
+    dir: { title: "Director's Interpretive Rules", body: 'Rules issued by Seattle departments to interpret and implement the SMC. Frequently amend or replace prior rules. Only valid if the underlying SMC section they interpret is still current.' },
+    ibc: { title: 'International Building Code', body: 'Building, fire, energy, and residential codes adopted by reference into state and city law. Washington applies state-specific amendments on top of the international standards.' },
+    spu: { title: 'SPU Design Standards', body: 'Engineering and infrastructure design standards for stormwater, water, and sewer systems. Published by Seattle Public Utilities and enforced under SMC authority for all development projects.' },
+    gov: { title: "Governor's Executive Orders", body: 'Executive directives that implement statutes and direct state agencies. Cover emergency powers, policy priorities, and inter-agency coordination across Washington State.' },
+    court: { title: 'Washington Court Opinions', body: 'Decisions from the Supreme Court and Court of Appeals. Can invalidate or reinterpret provisions from any source in the hierarchy. The final arbiter of legal meaning when sources conflict.' }
+  };
+
+  var tooltip = document.getElementById('hTooltip');
+  var wrapper = document.querySelector('.hierarchy-wrapper');
+  if (!tooltip || !wrapper) return;
+
+  document.querySelectorAll('.hierarchy-node[data-tooltip]').forEach(function(node) {
+    node.addEventListener('mouseenter', function() {
+      var key = node.getAttribute('data-tooltip');
+      var side = node.getAttribute('data-side');
+      var data = tooltipData[key];
+      if (!data) return;
+
+      tooltip.querySelector('.tt-title').textContent = data.title;
+      tooltip.querySelector('.tt-body').textContent = data.body;
+
+      var anchorEl = document.querySelector('.h-tooltip-anchor');
+      var anchorRect = anchorEl.getBoundingClientRect();
+      var nodeRect = node.getBoundingClientRect();
+      var svgEl = wrapper.querySelector('svg');
+      var svgRect = svgEl.getBoundingClientRect();
+      // Position tooltip at the node's vertical center, clamped within diagram height
+      var topPos = nodeRect.top - anchorRect.top + (nodeRect.height / 2) - 40;
+      var maxTop = svgRect.height - 120;
+      topPos = Math.max(0, Math.min(topPos, maxTop));
+      tooltip.style.top = topPos + 'px';
+      tooltip.classList.add('visible');
+    });
+
+    node.addEventListener('mouseleave', function() {
+      tooltip.classList.remove('visible');
+    });
+  });
 })();
 </script>
 </body>
