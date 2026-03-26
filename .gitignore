@@ -66,4 +66,4 @@ CLAUDE.md
 SPC Research.pdf
 docs/*
 !docs/index.html
-!docs/site/
+!docs/chat_agent_demo.webp
