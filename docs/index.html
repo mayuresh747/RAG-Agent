@@ -1973,8 +1973,8 @@ sections.forEach(s => navObserver.observe(s));
           ctx.beginPath();
           ctx.moveTo(nodes[i].x, nodes[i].y);
           ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.strokeStyle = 'rgba(44,74,138,' + (0.18 * (1 - dist / CONNECT_DIST)) + ')';
-          ctx.lineWidth = 0.8;
+          ctx.strokeStyle = 'rgba(44,74,138,' + (0.09 * (1 - dist / CONNECT_DIST)) + ')';
+          ctx.lineWidth = 0.6;
           ctx.stroke();
         }
       }
@@ -1987,7 +1987,7 @@ sections.forEach(s => navObserver.observe(s));
       if (n.y < 0 || n.y > H) n.vy *= -1;
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(44,74,138,0.20)';
+      ctx.fillStyle = 'rgba(44,74,138,0.10)';
       ctx.fill();
     });
 
