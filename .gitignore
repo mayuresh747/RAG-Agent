@@ -65,4 +65,5 @@ CLAUDE.md
 # Research and Documentation
 SPC Research.pdf
 docs/*
+!docs/index.html
 !docs/site/
