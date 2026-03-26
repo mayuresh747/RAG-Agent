@@ -957,7 +957,7 @@ nav, section, footer { position: relative; z-index: 1; }
   border: 1px solid var(--border);
   box-shadow: 0 25px 50px rgba(0,0,0,0.1);
 }
-.demo-video video { width: 100%; display: block; }
+.demo-video video, .demo-video img { width: 100%; display: block; }
 
 .try-buttons {
   display: flex;
@@ -1645,10 +1645,8 @@ footer a:hover { text-decoration: underline; }
       <p class="section-desc animate-in" style="text-align:center; margin-left:auto; margin-right:auto;">Ask real policy questions and get cited, sourced answers from 6,000+ government documents.</p>
 
       <div class="animate-in stagger-1">
-        <!-- Video placeholder — replace with <div class="demo-video"><video>...</video></div> when recording is ready -->
-        <div class="demo-placeholder" id="demoArea">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <p>Demo video coming soon</p>
+        <div class="demo-video">
+          <img src="chat_agent_demo.webp" alt="Seattle Policy Agent demo — asking policy questions and receiving cited answers" loading="lazy" width="700">
         </div>
       </div>
 
