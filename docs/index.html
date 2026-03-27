@@ -255,12 +255,12 @@ nav, section, footer { position: relative; z-index: 1; }
 .hero-stats {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: 64px;
   flex-wrap: wrap;
   margin-bottom: 40px;
 }
 
-.stat-item { text-align: center; }
+.stat-item { text-align: center; min-width: 100px; }
 .stat-number {
   font-family: var(--font-heading);
   font-size: 2.4rem;
@@ -827,6 +827,7 @@ nav, section, footer { position: relative; z-index: 1; }
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;
   margin-bottom: 24px;
 }
 
@@ -1026,10 +1027,13 @@ nav, section, footer { position: relative; z-index: 1; }
 /* ========== TEAM ========== */
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 32px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px 32px;
   max-width: 900px;
   margin: 0 auto;
+}
+@media (max-width: 700px) {
+  .team-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .team-card {
@@ -1099,15 +1103,13 @@ footer a:hover { text-decoration: underline; }
   <div class="nav-inner">
     <a href="#hero" class="nav-brand">UW Policy Research</a>
     <ul class="nav-links">
-      <li><a href="#problem">Policy Friction</a></li>
+      <li><a href="#problem">The Problem</a></li>
       <li><a href="#questions">Questions</a></li>
-      <li><a href="#approach">Approach</a></li>
-      <li><a href="#pipeline">Pipeline</a></li>
       <li><a href="#corpus">Corpus</a></li>
       <li><a href="#taxonomy">Taxonomy</a></li>
       <li><a href="#results">Results</a></li>
       <li><a href="#tryit">Try It</a></li>
-      <li><a href="#team">Team</a></li>
+      <li><a href="#team">Collaborators</a></li>
     </ul>
   </div>
 </nav>
@@ -1127,10 +1129,6 @@ footer a:hover { text-decoration: underline; }
       <div class="stat-item">
         <span class="stat-number" data-target="6000" data-suffix="+">0</span>
         <span class="stat-label">Documents</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number" data-target="10">0</span>
-        <span class="stat-label">Phases</span>
       </div>
       <div class="stat-item">
         <span class="stat-number" data-target="6">0</span>
@@ -1157,14 +1155,15 @@ footer a:hover { text-decoration: underline; }
 <section id="problem">
   <div class="container">
     <p class="section-label animate-in">Why This Matters</p>
-    <h2 class="section-title animate-in">Policy Friction</h2>
+    <h2 class="section-title animate-in">Navigating Regulatory Complexity</h2>
     <div class="container--narrow" style="padding:0; margin-bottom:48px;">
       <p class="animate-in" style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7; margin-bottom:20px;">Regulatory systems grow through steady addition. New statutes, ordinances, rules, and technical standards are layered on over time, while older provisions are rarely removed. The result is friction: well-intentioned policies interact in ways that slow housing production, downtown revitalization, infrastructure delivery, and business activity.</p>
       <p class="animate-in" style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7; margin-bottom:20px;">Seattle experiences this challenge acutely because projects must comply simultaneously with state law, city codes, director's rules, and agency standards. No single team can realistically track how these layers interact across topics. This creates uncertainty for applicants, delays for reviewers, and missed opportunities for targeted policy improvement.</p>
       <p class="animate-in" style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7; margin-bottom:20px;">This project explores how generative AI can help by reading these materials together and surfacing places where requirements overlap, conflict, or create ambiguity. The system does not make decisions or recommendations. It identifies candidate issues early so that people can evaluate and act on them.</p>
-      <p class="animate-in" style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7;">This approach aligns with the Seattle AI Plan's emphasis on transparency, auditability, and decision support&mdash;using AI to assist public servants and policymakers rather than replace judgment.</p>
+      <p class="animate-in" style="font-size:1.05rem; color:var(--text-secondary); line-height:1.7;">This approach aligns with the Seattle AI Plan's emphasis on transparency, auditability, and decision support using AI to assist public servants and policymakers rather than replace judgment.</p>
     </div>
 
+    <h3 class="animate-in" style="font-family:var(--font-heading); font-size:1.3rem; font-weight:600; color:var(--text-primary); padding:24px 0; margin-bottom:0; text-align:center; letter-spacing:-0.01em;">Key Dimensions of Regulatory Friction</h3>
     <div class="challenge-grid">
       <div class="challenge-card animate-in stagger-1">
         <div class="challenge-icon challenge-icon--teal">
@@ -1178,7 +1177,7 @@ footer a:hover { text-decoration: underline; }
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         </div>
         <h3>Overlapping Requirements</h3>
-        <p>Multiple provisions may govern the same activity with different thresholds, timelines, or definitions&mdash;creating ambiguity for applicants and reviewers.</p>
+        <p>Multiple provisions may govern the same activity with different thresholds, timelines, or definitions, creating ambiguity for applicants and reviewers.</p>
       </div>
       <div class="challenge-card animate-in stagger-3">
         <div class="challenge-icon challenge-icon--purple">
@@ -1192,13 +1191,15 @@ footer a:hover { text-decoration: underline; }
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
         </div>
         <h3>Cross-Domain Interactions</h3>
-        <p>Housing, land use, environmental, and building requirements intersect in ways that no single team can fully track&mdash;slowing projects and obscuring reform opportunities.</p>
+        <p>Housing, land use, environmental, and building requirements intersect in ways that no single team can fully track slowing projects and obscuring reform opportunities.</p>
       </div>
     </div>
 
+    <h3 class="animate-in" style="font-family:var(--font-heading); font-size:1.3rem; font-weight:600; color:var(--text-primary); padding:24px 0; margin-bottom:0; text-align:center; letter-spacing:-0.01em;">The Governing Framework</h3>
+
     <!-- Source Authority Hierarchy -->
     <div class="hierarchy-wrapper animate-in">
-      <svg class="hierarchy-svg" viewBox="0 0 680 580" xmlns="http://www.w3.org/2000/svg">
+      <svg class="hierarchy-svg" viewBox="0 0 680 590" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#8b8f9e"/>
@@ -1269,18 +1270,22 @@ footer a:hover { text-decoration: underline; }
           <text x="530" y="455" text-anchor="middle" class="node-desc">Engineering standards under SMC authority</text>
         </g>
 
+        <!-- ===== CROSS-CUTTING AUTHORITIES ===== -->
+        <line x1="40" y1="492" x2="640" y2="492" stroke="#cdd1da" stroke-width="1" stroke-dasharray="4 3"/>
+        <text x="340" y="508" text-anchor="middle" style="font-family:Inter,sans-serif; font-size:10px; font-weight:600; fill:#8b8f9e; letter-spacing:0.08em; text-transform:uppercase;">Cross-Cutting Authorities</text>
+
         <!-- Governor's Orders -->
         <g class="hierarchy-node" data-tooltip="gov">
-          <rect x="30" y="510" width="290" height="55"/>
-          <text x="175" y="535" text-anchor="middle" class="node-title">Governor&apos;s Executive Orders</text>
-          <text x="175" y="553" text-anchor="middle" class="node-desc">Executive directives, direct state agencies</text>
+          <rect x="30" y="520" width="290" height="55"/>
+          <text x="175" y="545" text-anchor="middle" class="node-title">Governor&apos;s Executive Orders</text>
+          <text x="175" y="563" text-anchor="middle" class="node-desc">Executive directives, direct state agencies</text>
         </g>
 
         <!-- Court Opinions -->
         <g class="hierarchy-node" data-tooltip="court">
-          <rect x="365" y="510" width="290" height="55"/>
-          <text x="510" y="535" text-anchor="middle" class="node-title">Washington Court Opinions</text>
-          <text x="510" y="553" text-anchor="middle" class="node-desc">Judicial interpretation of all sources</text>
+          <rect x="365" y="520" width="290" height="55"/>
+          <text x="510" y="545" text-anchor="middle" class="node-title">Washington Court Opinions</text>
+          <text x="510" y="563" text-anchor="middle" class="node-desc">Judicial interpretation of all sources</text>
         </g>
       </svg>
 
@@ -1383,196 +1388,9 @@ footer a:hover { text-decoration: underline; }
   </div>
 </section>
 
-<!-- ==================== THE APPROACH ==================== -->
-<section id="approach">
-  <div class="container">
-    <p class="section-label animate-in">How We're Doing It</p>
-    <h2 class="section-title animate-in">The Incremental Approach</h2>
-    <p class="section-desc animate-in">Each phase changes exactly one variable. This lets us precisely measure the contribution of every component.</p>
+<!-- Approach and Pipeline sections removed — preserved in git history (commit d8a151b and earlier) -->
+<!-- To restore: git show d8a151b:docs/index.html and extract the #approach and #pipeline sections -->
 
-    <div class="timeline-container animate-in">
-      <div class="timeline-track" id="timeline">
-        <div class="timeline-phase done" data-phase="0" onclick="showPhase(0)">
-          <div class="phase-dot">0</div>
-          <span class="phase-label">Bare LLM</span>
-        </div>
-        <div class="timeline-phase done" data-phase="1" onclick="showPhase(1)">
-          <div class="phase-dot">1</div>
-          <span class="phase-label">Basic Prompt</span>
-        </div>
-        <div class="timeline-phase done" data-phase="2" onclick="showPhase(2)">
-          <div class="phase-dot">2</div>
-          <span class="phase-label">Engineered Prompt</span>
-        </div>
-        <div class="timeline-phase current" data-phase="3" onclick="showPhase(3)">
-          <div class="phase-dot">3</div>
-          <span class="phase-label">Basic RAG</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="4" onclick="showPhase(4)">
-          <div class="phase-dot">4</div>
-          <span class="phase-label">Chunking</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="5" onclick="showPhase(5)">
-          <div class="phase-dot">5</div>
-          <span class="phase-label">Hybrid Search</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="6" onclick="showPhase(6)">
-          <div class="phase-dot">6</div>
-          <span class="phase-label">Multi-Source</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="7" onclick="showPhase(7)">
-          <div class="phase-dot">7</div>
-          <span class="phase-label">Query Decomp</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="8" onclick="showPhase(8)">
-          <div class="phase-dot">8</div>
-          <span class="phase-label">Guardrails</span>
-        </div>
-        <div class="timeline-phase upcoming" data-phase="9" onclick="showPhase(9)">
-          <div class="phase-dot">9</div>
-          <span class="phase-label">Agentic</span>
-        </div>
-      </div>
-
-      <div id="phase-details">
-        <div class="phase-detail active" data-phase="0">
-          <span class="phase-badge phase-badge--done">Completed</span>
-          <h3>Phase 0: Bare LLM Baseline</h3>
-          <p class="phase-var">Variable: No context, no system prompt, no retrieval</p>
-          <p>Establish the absolute baseline by testing GPT-5.1's ability to answer policy questions using only its pre-trained knowledge. No system prompt, no retrieval, no additional context.</p>
-        </div>
-        <div class="phase-detail" data-phase="1">
-          <span class="phase-badge phase-badge--done">Completed</span>
-          <h3>Phase 1: Basic System Prompt</h3>
-          <p class="phase-var">Variable: Addition of basic system prompt</p>
-          <p>Add a simple system prompt that identifies the agent's role and jurisdiction scope. Measures whether basic instruction-following reduces hallucination and improves accuracy.</p>
-        </div>
-        <div class="phase-detail" data-phase="2">
-          <span class="phase-badge phase-badge--done">Completed</span>
-          <h3>Phase 2: Engineered System Prompt</h3>
-          <p class="phase-var">Variable: System prompt engineering sophistication</p>
-          <p>Replace the basic prompt with a carefully engineered "Regulatory Auditor" persona prompt. Tests whether detailed prompt engineering alone can meaningfully improve response quality.</p>
-        </div>
-        <div class="phase-detail" data-phase="3">
-          <span class="phase-badge phase-badge--current">Current Phase</span>
-          <h3>Phase 3: Basic RAG Pipeline</h3>
-          <p class="phase-var">Variable: Addition of basic RAG pipeline</p>
-          <p>Introduce the core retrieval pipeline: embed queries with text-embedding-3-large, search ChromaDB, inject retrieved chunks into the prompt. The first phase where the LLM has access to actual policy documents.</p>
-        </div>
-        <div class="phase-detail" data-phase="4">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 4: Chunking &amp; Embedding Strategies</h3>
-          <p class="phase-var">Variable: Chunking and embedding strategies</p>
-          <p>Compare chunking approaches (fixed-size, recursive, legal-aware separators) and embedding models. Optimize how documents are split and represented in vector space.</p>
-        </div>
-        <div class="phase-detail" data-phase="5">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 5: Hybrid Search &amp; Reranking</h3>
-          <p class="phase-var">Variable: Retrieval strategy (hybrid search, reranking)</p>
-          <p>Layer BM25 keyword search with vector search, and add cross-encoder reranking (Cohere Rerank v3, BGE Reranker v2) to improve retrieval precision.</p>
-        </div>
-        <div class="phase-detail" data-phase="6">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 6: Multi-Source Corpus Scale</h3>
-          <p class="phase-var">Variable: Corpus scale (~all 6000+ documents from 8 sources)</p>
-          <p>Scale from a subset to the full corpus across all 8 WA State/Seattle sources. Tests how retrieval quality holds up at scale with potential collection confusion.</p>
-        </div>
-        <div class="phase-detail" data-phase="7">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 7: Query Decomposition</h3>
-          <p class="phase-var">Variable: Query processing (decomposition, multi-hop chains)</p>
-          <p>Break complex queries into sub-queries, execute multiple retrieval cycles, and synthesize results. Targets Level 3-5 query complexity.</p>
-        </div>
-        <div class="phase-detail" data-phase="8">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 8: Guardrails &amp; Citation Enforcement</h3>
-          <p class="phase-var">Variable: Guardrails and citation enforcement</p>
-          <p>Add domain restrictions, hallucination detection, citation requirements, and confidence scoring. Tests whether guardrails improve reliability without sacrificing coverage.</p>
-        </div>
-        <div class="phase-detail" data-phase="9">
-          <span class="phase-badge phase-badge--upcoming">Upcoming</span>
-          <h3>Phase 9: Agentic Architecture</h3>
-          <p class="phase-var">Variable: Agentic architecture with tool use</p>
-          <p>Upgrade from a single-turn RAG to an agent that can plan retrieval strategies, use tools, iterate on queries, and autonomously decide when it has enough information to answer.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== PIPELINE ==================== -->
-<section id="pipeline">
-  <div class="container">
-    <p class="section-label animate-in">System Architecture</p>
-    <h2 class="section-title animate-in">The RAG Pipeline</h2>
-    <p class="section-desc animate-in">Every query flows through this pipeline, from a natural language question to a cited, streamed response.</p>
-
-    <div class="pipeline-wrapper animate-in">
-      <svg class="pipeline-svg" viewBox="0 0 1050 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#8b8f9e"/>
-          </marker>
-          <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#2c4a8a;stop-opacity:0.2"/>
-            <stop offset="50%" style="stop-color:#2c4a8a;stop-opacity:0.6"/>
-            <stop offset="100%" style="stop-color:#2c4a8a;stop-opacity:0.2"/>
-          </linearGradient>
-        </defs>
-
-        <!-- Flow line -->
-        <path id="flowPath" d="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100" fill="none" stroke="#cdd1da" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrowhead)"/>
-
-        <!-- Animated packet -->
-        <circle class="pipeline-packet" r="5" fill="var(--teal)" opacity="0">
-          <animateMotion dur="5s" repeatCount="indefinite" path="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100"/>
-          <animate attributeName="opacity" values="0;1;1;1;1;1;0" dur="5s" repeatCount="indefinite"/>
-        </circle>
-        <circle r="3" fill="var(--teal)" opacity="0">
-          <animateMotion dur="5s" repeatCount="indefinite" begin="0.4s" path="M 65 100 L 200 100 L 350 100 L 500 100 L 650 100 L 800 100 L 950 100"/>
-          <animate attributeName="opacity" values="0;0.5;0.5;0.5;0.5;0.5;0" dur="5s" repeatCount="indefinite" begin="0.4s"/>
-        </circle>
-
-        <!-- Nodes -->
-        <g class="pipeline-node">
-          <rect x="10" y="70" width="110" height="60"/>
-          <text x="65" y="96" text-anchor="middle" class="node-title">Query</text>
-          <text x="65" y="114" text-anchor="middle" class="node-sub">User question</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="145" y="70" width="110" height="60"/>
-          <text x="200" y="96" text-anchor="middle" class="node-title">Classifier</text>
-          <text x="200" y="114" text-anchor="middle" class="node-sub">gpt-4o-mini</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="295" y="70" width="110" height="60"/>
-          <text x="350" y="96" text-anchor="middle" class="node-title">Router</text>
-          <text x="350" y="114" text-anchor="middle" class="node-sub">~300 keyword rules</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="445" y="70" width="110" height="60"/>
-          <text x="500" y="96" text-anchor="middle" class="node-title">Embed</text>
-          <text x="500" y="114" text-anchor="middle" class="node-sub">text-embed-3-large</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="595" y="70" width="110" height="60"/>
-          <text x="650" y="96" text-anchor="middle" class="node-title">Search</text>
-          <text x="650" y="114" text-anchor="middle" class="node-sub">ChromaDB &middot; top-25</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="745" y="70" width="110" height="60"/>
-          <text x="800" y="96" text-anchor="middle" class="node-title">Generate</text>
-          <text x="800" y="114" text-anchor="middle" class="node-sub">GPT-5.1 &middot; SSE</text>
-        </g>
-        <g class="pipeline-node">
-          <rect x="895" y="70" width="110" height="60"/>
-          <text x="950" y="96" text-anchor="middle" class="node-title">Response</text>
-          <text x="950" y="114" text-anchor="middle" class="node-sub">Cited &middot; streamed</text>
-        </g>
-      </svg>
-    </div>
-  </div>
-</section>
 
 <!-- ==================== CORPUS ==================== -->
 <section id="corpus">
@@ -1789,43 +1607,48 @@ footer a:hover { text-decoration: underline; }
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Try the Live Agent
         </a>
-        <a href="https://github.com/mayuresh747/RAG-Agent" class="btn btn-outline" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-          View on GitHub
-        </a>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ==================== TEAM ==================== -->
+<!-- ==================== COLLABORATORS ==================== -->
 <section id="team">
   <div class="container">
     <p class="section-label animate-in">Collaborators</p>
-    <h2 class="section-title animate-in">Team</h2>
-    <p class="section-desc animate-in">A collaboration between the UW Center for Responsibility in AI Systems and Experiences and the City of Seattle.</p>
+    <h2 class="section-title animate-in">Project Collaborators</h2>
+    <p class="section-desc animate-in">A collaboration between the UW Center for Responsibility in AI Systems and Experiences (RAISE) and the City of Seattle.</p>
 
     <div class="team-grid">
-      <!-- Replace src with actual headshot URLs or local paths -->
       <div class="team-card animate-in stagger-1">
-        <img class="team-headshot" src="headshots/placeholder.jpg" alt="Team member headshot">
-        <div class="team-name">Name</div>
-        <div class="team-title">Title</div>
+        <img class="team-headshot" src="headshots/bill-howe.png" alt="Bill Howe headshot" style="object-position: center 15%">
+        <div class="team-name">Bill Howe</div>
+        <div class="team-title">Associate Professor, University of Washington</div>
       </div>
       <div class="team-card animate-in stagger-2">
-        <img class="team-headshot" src="headshots/placeholder.jpg" alt="Team member headshot">
-        <div class="team-name">Name</div>
-        <div class="team-title">Title</div>
+        <img class="team-headshot" src="headshots/rob-lloyd.png" alt="Rob Lloyd headshot" style="object-position: 60% center">
+        <div class="team-name">Rob Lloyd</div>
+        <div class="team-title">CTO, City of Seattle</div>
       </div>
       <div class="team-card animate-in stagger-3">
-        <img class="team-headshot" src="headshots/placeholder.jpg" alt="Team member headshot">
-        <div class="team-name">Name</div>
-        <div class="team-title">Title</div>
+        <img class="team-headshot" src="headshots/lisa-qian.png" alt="Lisa Qian headshot">
+        <div class="team-name">Lisa Qian</div>
+        <div class="team-title">City AI Officer, City of Seattle</div>
       </div>
       <div class="team-card animate-in stagger-4">
-        <img class="team-headshot" src="headshots/placeholder.jpg" alt="Team member headshot">
-        <div class="team-name">Name</div>
-        <div class="team-title">Title</div>
+        <img class="team-headshot" src="headshots/angela-goad.png" alt="Angela Goad headshot">
+        <div class="team-name">Angela Goad</div>
+        <div class="team-title">Senior IT Project Manager, City of Seattle</div>
+      </div>
+      <div class="team-card animate-in stagger-5">
+        <img class="team-headshot" src="headshots/placeholder.svg" alt="Dan Nelson headshot">
+        <div class="team-name">Dan Nelson</div>
+        <div class="team-title">City of Seattle</div>
+      </div>
+      <div class="team-card animate-in stagger-1">
+        <img class="team-headshot" src="headshots/mayuresh-more.png" alt="Mayuresh More headshot" style="object-position: center 20%">
+        <div class="team-name">Mayuresh More</div>
+        <div class="team-title">Research Assistant, University of Washington</div>
       </div>
     </div>
   </div>
@@ -1930,6 +1753,19 @@ const chartObserver = new IntersectionObserver((entries) => {
 const resultsSection = document.getElementById('results');
 if (resultsSection) chartObserver.observe(resultsSection);
 
+// Separate observer for corpus pie chart (appears before results)
+let corpusChartInitialized = false;
+const corpusObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !corpusChartInitialized) {
+      corpusChartInitialized = true;
+      initCorpusChart();
+    }
+  });
+}, { threshold: 0.2 });
+const corpusSection = document.getElementById('corpus');
+if (corpusSection) corpusObserver.observe(corpusSection);
+
 function initCharts() {
   const labels = ['L1\nFactual', 'L2\nMulti-Fact', 'L3\nMulti-Doc', 'L4\nMulti-Hop', 'L5\nTemporal', 'L6\nAdversarial'];
   const shortLabels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
@@ -2028,7 +1864,9 @@ function initCharts() {
     }
   });
 
-  // Corpus Donut Chart
+}
+
+function initCorpusChart() {
   new Chart(document.getElementById('corpusChart'), {
     type: 'doughnut',
     data: {
