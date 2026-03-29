@@ -94,6 +94,7 @@ def chat_stream(
     system = system_prompt or DEFAULT_SYSTEM_PROMPT
 
     # Retrieve relevant context (multi-agent or legacy path)
+    pipeline_meta = {}  # populated by multi-agent path for prompt injection
     try:
         if USE_MULTI_AGENT:
             retrieval_result = multi_agent_retrieve(user_message, min_score=0.1)
@@ -101,6 +102,7 @@ def chat_stream(
             sources = build_sources_metadata(retrieval_result.chunks)
             if retrieval_result.audit_trace:
                 yield {"type": "audit", "data": retrieval_result.audit_trace}
+                pipeline_meta = retrieval_result.audit_trace.get("analysis", {})
         else:
             if top_k is None:
                 client = _get_client()
@@ -129,14 +131,33 @@ def chat_stream(
 
     yield {"type": "sources", "data": sources}
 
-    augmented_system = (
-        f"{system}\n\n"
-        f"─── RETRIEVED CONTEXT ───\n\n"
-        f"{context_block}\n\n"
-        f"─── END CONTEXT ───\n\n"
-        f"Use the above context to answer the user's question. "
-        f"Cite sources by their [Source N] reference."
-    )
+    if pipeline_meta:
+        mode = pipeline_meta.get("mode", "C")
+        agencies = ", ".join(pipeline_meta.get("agencies_in_scope", []))
+        meta_line = f"[MODE {mode} | Agencies: {agencies}]"
+        numerical_hint = ""
+        if pipeline_meta.get("requires_numerical_comparison"):
+            numerical_hint = (
+                "\nNOTE: This query involves numerical comparison — "
+                "pay extra attention to specific values, thresholds, "
+                "and dimensional requirements."
+            )
+        augmented_system = (
+            f"{system}\n\n"
+            f"{meta_line}{numerical_hint}\n\n"
+            f"─── RETRIEVED CONTEXT ───\n\n"
+            f"{context_block}\n\n"
+            f"─── END CONTEXT ───"
+        )
+    else:
+        augmented_system = (
+            f"{system}\n\n"
+            f"─── RETRIEVED CONTEXT ───\n\n"
+            f"{context_block}\n\n"
+            f"─── END CONTEXT ───\n\n"
+            f"Use the above context to answer the user's question. "
+            f"Cite sources by their [Source N] reference."
+        )
 
     # 4) Build messages list with conversation memory
     messages = [{"role": "system", "content": augmented_system}]
