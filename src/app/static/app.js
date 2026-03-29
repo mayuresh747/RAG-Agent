@@ -399,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 bubble.innerHTML = renderMarkdown(fullText) || '<em style="color:var(--text-muted)">No response received.</em>';
             }
+            enhanceSourceQuotes(bubble);
             // Add reveal AFTER innerHTML so the animation plays on the actual content
             void bubble.offsetWidth; // force reflow so animation triggers cleanly
             bubble.classList.add('reveal');
@@ -656,6 +657,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             return escapeHtml(text);
         }
+    }
+
+    /**
+     * Post-process blockquotes in a rendered bubble.
+     * If a blockquote contains a [Source N] citation-ref badge, prepend a
+     * "↳ Source N — verbatim" label and hide the duplicate badge inside the quote.
+     */
+    function enhanceSourceQuotes(bubbleEl) {
+        bubbleEl.querySelectorAll('blockquote').forEach(bq => {
+            const citRef = bq.querySelector('.citation-ref');
+            if (citRef) {
+                const label = document.createElement('span');
+                label.className = 'source-quote-label';
+                label.textContent = `\u21B3 ${citRef.textContent.trim()} \u2014 verbatim`;
+                bq.insertBefore(label, bq.firstChild);
+                citRef.style.display = 'none';
+            }
+        });
     }
 
     function typingHTML() {
