@@ -40,6 +40,32 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.1"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "8192"))
 CONVERSATION_MEMORY_SIZE = int(os.getenv("CONVERSATION_MEMORY_SIZE", "20"))
 
+# ── Multi-Agent Retrieval ─────────────────────────────────────────────────
+LLM_FAST = os.getenv("LLM_FAST", "gpt-4o-mini")
+USE_MULTI_AGENT = os.getenv("USE_MULTI_AGENT", "true").lower() in ("true", "1", "yes")
+
+COLLECTION_MAP = {
+    "RCW": "rcw_chapters",
+    "WAC": "wac_chapters",
+    "SMC": "smc_chapters",
+    "DIR": "seattle_dir_rules",
+    "SPU": "spu_design_standards",
+    "IBC_WA": "ibc_wa_docs",
+    "EXEC_ORDER": "wa_governor_orders",
+    "COURT": "washington_court_opinions",
+}
+COLLECTION_TO_AGENCY = {v: k for k, v in COLLECTION_MAP.items()}
+
+AUTHORITY_RANK = {
+    "COURT": 1, "RCW": 2, "WAC": 3, "EXEC_ORDER": 4,
+    "IBC_WA": 5, "SMC": 6, "DIR": 7, "SPU": 8,
+}
+
+CORPUS_WEIGHT = {
+    "WAC": 3.0, "RCW": 2.0, "DIR": 1.5, "COURT": 1.5,
+    "SMC": 1.0, "SPU": 1.0, "IBC_WA": 1.0, "EXEC_ORDER": 1.0,
+}
+
 # ── Default System Prompt ────────────────────────────────────────────────
 DEFAULT_SYSTEM_PROMPT = """ROLE
 You are a Self-Correcting Regulatory Auditor. Your primary goal, when asked,
