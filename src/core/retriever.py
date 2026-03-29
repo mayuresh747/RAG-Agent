@@ -28,6 +28,7 @@ class RetrievedChunk:
     page_number: int
     title: str = ""
     chunk_index: int = 0
+    rerank_score: float = 0.0
 
     @property
     def citation(self) -> str:
