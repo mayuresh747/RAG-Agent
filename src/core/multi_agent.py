@@ -32,7 +32,6 @@ def _fetch_agency_chunks(task: AgencyTask, query_vector: list, min_score: float)
     ChromaDB returns distances; cosine similarity = 1 - distance.
     """
     result = vector_search(task.collection, query_vector, n_results=task.budget)
-    ids = result.get("ids", [[]])[0]
     docs = result.get("documents", [[]])[0]
     metas = result.get("metadatas", [[]])[0]
     dists = result.get("distances", [[]])[0]
