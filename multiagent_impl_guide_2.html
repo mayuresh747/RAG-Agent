@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PolicyRAG — Multi-Agent Retrieval Implementation Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&family=Playfair+Display:wght@400;600&display=swap');
+
+:root {
+  --bg:      #0d0f12;
+  --bg2:     #141720;
+  --bg3:     #1c2030;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #c8cdd8;
+  --text2:   #7a8194;
+  --text3:   #4a5168;
+  --head:    #e8ecf4;
+  --accent:  #4a9eff;
+  --green:   #3dba7a;
+  --amber:   #e8a93a;
+  --red:     #e85c5c;
+  --purple:  #9b7de8;
+  --mono:    'IBM Plex Mono', monospace;
+  --sans:    'IBM Plex Sans', system-ui, sans-serif;
+  --serif:   'Playfair Display', Georgia, serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 240px;
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 0 0 32px;
+  z-index: 50;
+}
+
+.sb-brand {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.sb-brand-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.sb-brand-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--head);
+  line-height: 1.3;
+}
+
+.sb-section {
+  padding: 16px 20px 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.sb-link {
+  display: block;
+  padding: 5px 20px;
+  font-size: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+.sb-link:hover { color: var(--head); background: rgba(255,255,255,0.03); }
+.sb-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(74,158,255,0.05); }
+
+/* ── MAIN ── */
+#main {
+  margin-left: 240px;
+  padding: 0 64px 96px;
+  max-width: 920px;
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.hero-title {
+  font-family: var(--serif);
+  font-size: 40px;
+  color: var(--head);
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+.hero-desc {
+  font-size: 15px;
+  color: var(--text2);
+  max-width: 600px;
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+.hero-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.pill-green  { border-color: rgba(61,186,122,0.3); color: var(--green); }
+.pill-amber  { border-color: rgba(232,169,58,0.3); color: var(--amber); }
+.pill-blue   { border-color: rgba(74,158,255,0.3); color: var(--accent); }
+
+/* ── SECTIONS ── */
+.section {
+  margin-bottom: 72px;
+  scroll-margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.step-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: rgba(74,158,255,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(74,158,255,0.25);
+  padding: 3px 9px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  color: var(--head);
+}
+
+/* ── SUBSECTIONS ── */
+.sub {
+  margin-bottom: 36px;
+  scroll-margin-top: 24px;
+}
+.sub-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--head);
+  margin-bottom: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+}
+p { color: var(--text); margin-bottom: 12px; font-size: 13.5px; }
+strong { color: var(--head); font-weight: 500; }
+
+/* ── CODE ── */
+pre {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+  position: relative;
+}
+.file-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  padding: 6px 14px;
+  border-radius: 6px 6px 0 0;
+  display: inline-block;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 1;
+}
+.file-label + pre { border-radius: 0 6px 6px 6px; }
+
+code { font-family: var(--mono); font-size: 12px; color: var(--amber); background: rgba(232,169,58,0.08); padding: 1px 5px; border-radius: 3px; }
+pre code { background: none; padding: 0; color: inherit; }
+
+/* syntax */
+.cm { color: #4a5570; font-style: italic; }
+.ck { color: #7ab4ff; }
+.cs { color: #8bc4a0; }
+.cf { color: #b8d4a0; }
+.cn { color: #e8a860; }
+.cd { color: #c8a0e0; }
+
+/* ── CALLOUTS ── */
+.callout {
+  border-left: 3px solid;
+  padding: 14px 18px;
+  margin: 16px 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+}
+.callout p { margin: 0; font-size: 13px; }
+.callout-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.info  { border-color: var(--accent); background: rgba(74,158,255,0.06); }
+.info  .callout-title { color: var(--accent); }
+.warn  { border-color: var(--amber);  background: rgba(232,169,58,0.06); }
+.warn  .callout-title { color: var(--amber); }
+.ok    { border-color: var(--green);  background: rgba(61,186,122,0.06); }
+.ok    .callout-title { color: var(--green); }
+.crit  { border-color: var(--red);    background: rgba(232,92,92,0.06); }
+.crit  .callout-title { color: var(--red); }
+
+/* ── TABLES ── */
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12.5px; }
+th {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-align: left;
+  padding: 9px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border2);
+}
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ── FLOW DIAGRAM ── */
+.flow {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  margin: 16px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.flow-box {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.fblue  { background: rgba(74,158,255,0.1); border-color: rgba(74,158,255,0.3); color: var(--accent); }
+.fgreen { background: rgba(61,186,122,0.1); border-color: rgba(61,186,122,0.3); color: var(--green); }
+.famber { background: rgba(232,169,58,0.1); border-color: rgba(232,169,58,0.3); color: var(--amber); }
+.fpurp  { background: rgba(155,125,232,0.1); border-color: rgba(155,125,232,0.3); color: var(--purple); }
+.fgray  { background: rgba(255,255,255,0.04); border-color: var(--border2); color: var(--text2); }
+.farrow { color: var(--text3); font-size: 14px; }
+
+/* ── NUMBERED STEPS ── */
+.steps { list-style: none; counter-reset: steps; margin: 12px 0; }
+.steps li {
+  counter-increment: steps;
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+}
+.steps li:last-child { border-bottom: none; }
+.steps li::before {
+  content: counter(steps, decimal-leading-zero);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  min-width: 28px;
+  padding-top: 2px;
+}
+
+/* ── EXAMPLE BOX ── */
+.example {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--purple);
+  border-radius: 0 0 6px 6px;
+  padding: 16px 18px;
+  margin: 14px 0;
+  font-size: 13px;
+}
+.example-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 8px;
+}
+
+/* ── FILE TREE ── */
+.tree {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.9;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  color: var(--text2);
+  margin: 12px 0;
+}
+.tree .new { color: var(--green); }
+.tree .exist { color: var(--text3); }
+.tree .changed { color: var(--amber); }
+.tree .dir { color: var(--accent); }
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* ── FOOTNOTE ── */
+.footnote {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  margin-top: 56px;
+  padding-top: 16px;
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-label">Implementation Guide</div>
+    <div class="sb-brand-title">Multi-Agent Retrieval<br>on Base ChromaDB RAG</div>
+  </div>
+
+  <div class="sb-section">Overview</div>
+  <a class="sb-link" href="#overview">What we are building</a>
+  <a class="sb-link" href="#prereqs">Prerequisites</a>
+  <a class="sb-link" href="#structure">File structure</a>
+
+  <div class="sb-section">Step 1 — Analyze</div>
+  <a class="sb-link" href="#s1-concept">Concept</a>
+  <a class="sb-link" href="#s1-config">config.py additions</a>
+  <a class="sb-link" href="#s1-code">analyzer.py</a>
+  <a class="sb-link" href="#s1-test">Test it</a>
+
+  <div class="sb-section">Step 2 — Plan</div>
+  <a class="sb-link" href="#s2-concept">Concept</a>
+  <a class="sb-link" href="#s2-budget">Budget calculation</a>
+  <a class="sb-link" href="#s2-code">planner.py</a>
+  <a class="sb-link" href="#s2-test">Test it</a>
+
+  <div class="sb-section">Step 3 — Retrieve</div>
+  <a class="sb-link" href="#s3-concept">Concept</a>
+  <a class="sb-link" href="#s3-code">retriever.py</a>
+  <a class="sb-link" href="#s3-test">Test it</a>
+
+  <div class="sb-section">Step 4 — Rerank</div>
+  <a class="sb-link" href="#s4-concept">Concept</a>
+  <a class="sb-link" href="#s4-code">reranker.py</a>
+
+  <div class="sb-section">Step 5 — Collect</div>
+  <a class="sb-link" href="#s5-concept">Concept</a>
+  <a class="sb-link" href="#s5-twopass">Two-pass selection</a>
+  <a class="sb-link" href="#s5-code">collector.py</a>
+  <a class="sb-link" href="#s5-test">Test it</a>
+
+  <div class="sb-section">Step 6 — Context</div>
+  <a class="sb-link" href="#s6-concept">Concept</a>
+  <a class="sb-link" href="#s6-code">context.py</a>
+
+  <div class="sb-section">Step 7 — Wire Up</div>
+  <a class="sb-link" href="#s7-concept">Concept</a>
+  <a class="sb-link" href="#s7-code">rag_chain.py changes</a>
+  <a class="sb-link" href="#s7-end2end">End-to-end test</a>
+
+  <div class="sb-section">Reference</div>
+  <a class="sb-link" href="#modes-ref">All 4 modes worked</a>
+  <a class="sb-link" href="#debug">Debugging checklist</a>
+  <a class="sb-link" href="#deps">Dependencies</a>
+</nav>
+
+<main id="main">
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="hero-tag">PolicyRAG — Multi-Agent Layer</div>
+  <h1 class="hero-title">Full Implementation Guide<br>for Multi-Agent Retrieval</h1>
+  <p class="hero-desc">
+    This guide walks through adding a multi-agent retrieval layer on top of your
+    existing ChromaDB RAG system — step by step, with full code, plain-English
+    explanations, and concrete examples for every mode. Nothing in your existing
+    ingestion or vector database changes.
+  </p>
+  <div class="hero-pills">
+    <span class="pill pill-green">ChromaDB unchanged</span>
+    <span class="pill pill-green">Ingestion unchanged</span>
+    <span class="pill pill-amber">6 new files</span>
+    <span class="pill pill-amber">1 file modified</span>
+    <span class="pill pill-blue">4 modes A / B / C / D</span>
+  </div>
+</div>
+
+<!-- ═══ OVERVIEW ═══ -->
+<section class="section" id="overview">
+  <div class="section-header">
+    <span class="step-badge">OVERVIEW</span>
+    <h2 class="section-title">What We Are Building</h2>
+  </div>
+
+  <div class="sub" id="prereqs">
+    <div class="sub-title">What you already have (do not change these)</div>
+    <p>Your existing system does the following in sequence:</p>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box fgray">User query</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fgray">gpt-4o-mini classifier (SIMPLE/COMPLEX)</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fgray">300 regex patterns → pick libraries</div>
+      </div>
+      <div class="flow-row">
+        <span style="color:var(--text3);padding-left:8px">→</span>
+        <div class="flow-box fgray">Embed query (text-embedding-3-large)</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fgray">ChromaDB vector search (25 candidates/library)</div>
+      </div>
+      <div class="flow-row">
+        <span style="color:var(--text3);padding-left:8px">→</span>
+        <div class="flow-box fgray">Cosine rerank → top_k=12 or 24</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fgray">Build prompt → gpt-5.1 → stream</div>
+      </div>
+    </div>
+    <p>This works for single-agency factual questions. It breaks for multi-agency conflict analysis because it treats all agencies the same and cannot guarantee balanced evidence across both sides of a friction pair.</p>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">What we are adding (new flow)</div>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box fgray">User query</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fblue">Step 1: Analyzer</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fblue">Step 2: Planner</div>
+      </div>
+      <div class="flow-row" style="padding-left:20px">
+        <span class="farrow">→</span>
+        <div class="flow-box fgreen">Step 3: Parallel retrievers (one per agency)</div>
+      </div>
+      <div class="flow-row" style="padding-left:20px">
+        <span class="farrow">→</span>
+        <div class="flow-box famber">Step 4: Cross-encoder reranker</div>
+        <span class="farrow">→</span>
+        <div class="flow-box famber">Step 5: Collector (two-pass selection)</div>
+      </div>
+      <div class="flow-row" style="padding-left:20px">
+        <span class="farrow">→</span>
+        <div class="flow-box fpurp">Step 6: Structured context assembly</div>
+        <span class="farrow">→</span>
+        <div class="flow-box fgray">Your existing gpt-5.1 → stream</div>
+      </div>
+    </div>
+    <p>Steps 1 through 6 replace the classifier, regex router, ChromaDB search, and cosine rerank in your existing <code>rag_chain.py</code>. Everything after — the system prompt, conversation history, SSE streaming, rate limiter — stays exactly as it is.</p>
+  </div>
+
+  <div class="sub" id="structure">
+    <div class="sub-title">Files to create and modify</div>
+    <div class="tree">
+<span class="dir">your_project/</span>
+├── <span class="dir">retrieval/</span>               <span style="color:var(--text3)">← new folder</span>
+│   ├── <span class="new">analyzer.py</span>          <span style="color:var(--text3)">← NEW  Step 1</span>
+│   ├── <span class="new">reranker.py</span>          <span style="color:var(--text3)">← NEW  Step 4</span>
+│   └── <span class="new">context.py</span>           <span style="color:var(--text3)">← NEW  Step 6</span>
+├── <span class="dir">agents/</span>                  <span style="color:var(--text3)">← new folder</span>
+│   ├── <span class="new">planner.py</span>           <span style="color:var(--text3)">← NEW  Step 2</span>
+│   ├── <span class="new">retriever.py</span>         <span style="color:var(--text3)">← NEW  Step 3</span>
+│   └── <span class="new">collector.py</span>         <span style="color:var(--text3)">← NEW  Step 5</span>
+├── <span class="exist">config.py</span>                <span style="color:var(--amber)">← MODIFY  add 3 constants</span>
+└── <span class="exist">rag_chain.py</span>             <span style="color:var(--amber)">← MODIFY  swap retrieval block only</span>
+    </div>
+    <div class="callout ok">
+      <div class="callout-title">What you do NOT touch</div>
+      <p>Your ChromaDB collections, embedding function, ingestion scripts, chunker, system prompt, SSE streaming, rate limiter, conversation history — all unchanged.</p>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Install the one new package</div>
+    <pre>pip install sentence-transformers
+<span class="cm"># You already have chromadb and openai</span>
+<span class="cm"># sentence-transformers gives us the cross-encoder reranker</span>
+<span class="cm"># It will download the model (~85 MB) on first run, then cache it</span></pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 1 ═══ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <span class="step-badge">STEP 1 OF 7</span>
+    <h2 class="section-title">Query Analyzer</h2>
+  </div>
+
+  <div class="sub" id="s1-concept">
+    <div class="sub-title">What this step does and why</div>
+    <p>
+      Your current classifier asks one question: is this COMPLEX or SIMPLE? That determines top_k (24 or 12) and nothing else. The library router then independently runs 300 regex patterns to pick collections.
+    </p>
+    <p>
+      This step replaces both with a single LLM call that returns structured JSON answering four questions simultaneously:
+    </p>
+    <ol class="steps">
+      <li>What mode is this query — factual (A), named-agency conflict (B), topic conflict (C), or full audit (D)?</li>
+      <li>Which agencies are relevant — and which ChromaDB collection does each map to?</li>
+      <li>How relevant is each agency to THIS specific query — score 1, 2, or 3?</li>
+      <li>How many total chunks do we need in the final answer?</li>
+    </ol>
+
+    <div class="example">
+      <div class="example-label">Example — water main query</div>
+      <p>Query: <em>"Can the city force me to upgrade the water main outside my property as a condition of my building permit?"</em></p>
+      <p>Analyzer output:</p>
+      <pre style="margin:8px 0 0">{
+  "mode": "C",
+  "agencies_in_scope": ["SPU", "SMC", "RCW", "COURT"],
+  "agency_relevance":  {"SPU": 3, "RCW": 2, "SMC": 2, "COURT": 3},
+  "top_k": 28,
+  "requires_numerical_comparison": false,
+  "collections": {
+    "SPU":   "spu_design_standards",
+    "SMC":   "smc_chapters",
+    "RCW":   "rcw_chapters",
+    "COURT": "washington_court_opinions"
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="sub" id="s1-config">
+    <div class="sub-title">config.py — add these three blocks</div>
+    <p>Open your existing <code>config.py</code> and add the following. Do not remove anything already there.</p>
+
+    <div class="file-label">config.py  (add to existing file)</div>
+    <pre><span class="cm"># ── Multi-agent additions ─────────────────────────────────────────────────</span>
+
+<span class="cm"># Maps agency label → your actual ChromaDB collection name</span>
+<span class="cm"># Change the values on the right to match whatever you named your collections</span>
+COLLECTION_MAP = {
+    <span class="cs">"RCW"</span>:        <span class="cs">"rcw_chapters"</span>,
+    <span class="cs">"WAC"</span>:        <span class="cs">"wac_chapters"</span>,
+    <span class="cs">"SMC"</span>:        <span class="cs">"smc_chapters"</span>,
+    <span class="cs">"DIR"</span>:        <span class="cs">"seattle_dir_rules"</span>,
+    <span class="cs">"SPU"</span>:        <span class="cs">"spu_design_standards"</span>,
+    <span class="cs">"IBC_WA"</span>:     <span class="cs">"ibc_wa_docs"</span>,
+    <span class="cs">"EXEC_ORDER"</span>: <span class="cs">"wa_governor_orders"</span>,
+    <span class="cs">"COURT"</span>:      <span class="cs">"washington_court_opinions"</span>,
+}
+
+<span class="cm"># Authority hierarchy — lower number = higher authority</span>
+<span class="cm"># Used to sort context block and resolve preemption conflicts</span>
+AUTHORITY_RANK = {
+    <span class="cs">"COURT"</span>:      1,
+    <span class="cs">"RCW"</span>:        2,
+    <span class="cs">"WAC"</span>:        3,
+    <span class="cs">"EXEC_ORDER"</span>: 4,
+    <span class="cs">"IBC_WA"</span>:     5,
+    <span class="cs">"SMC"</span>:        6,
+    <span class="cs">"DIR"</span>:        7,
+    <span class="cs">"SPU"</span>:        8,
+}
+
+<span class="cm"># Corpus size weights — larger corpus needs more candidates to surface the right chunk</span>
+<span class="cm"># Based on your actual file counts: WAC~4300, RCW~1100, DIR~179, COURT~200, SMC~22, etc.</span>
+CORPUS_WEIGHT = {
+    <span class="cs">"WAC"</span>:        3.0,
+    <span class="cs">"RCW"</span>:        2.0,
+    <span class="cs">"DIR"</span>:        1.5,
+    <span class="cs">"COURT"</span>:      1.5,
+    <span class="cs">"SMC"</span>:        1.0,
+    <span class="cs">"SPU"</span>:        1.0,
+    <span class="cs">"IBC_WA"</span>:     1.0,
+    <span class="cs">"EXEC_ORDER"</span>: 1.0,
+}</pre>
+  </div>
+
+  <div class="sub" id="s1-code">
+    <div class="sub-title">retrieval/analyzer.py — create this file</div>
+    <p>Create the folder <code>retrieval/</code> at your project root, then create this file inside it.</p>
+    <p>
+      Key things to notice in the code below:
+      <br>— <code>response_format={"type": "json_object"}</code> forces the LLM to return valid JSON. Never skip this.
+      <br>— <code>temperature=0</code> makes routing deterministic. You do not want random agency selection.
+      <br>— The prompt explains the relevance scoring rules in plain English because the LLM needs to understand your corpus, not just return a number.
+    </p>
+
+    <div class="file-label">retrieval/analyzer.py</div>
+    <pre><span class="ck">import</span> json
+<span class="ck">from</span> openai <span class="ck">import</span> AsyncOpenAI
+<span class="ck">from</span> config <span class="ck">import</span> COLLECTION_MAP, LLM_FAST
+
+oai = AsyncOpenAI()
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# ANALYZER PROMPT
+#
+# This prompt does the work of both your binary classifier AND your
+# 300-regex library router — in a single call that understands meaning,
+# not just keywords.
+#
+# Every instruction below is deliberate:
+#   - Mode rules prevent the LLM from over-classifying simple questions as D
+#   - Relevance rules are query-specific, not agency-specific
+#   - top_k rules give enough headroom for the reranker to work
+#   - Agency guidance prevents COURT from being missed on legal disputes
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+ANALYZER_PROMPT = <span class="cs">"""
+You are a query router for a regulatory RAG system. You have 8 document
+collections covering Washington State and Seattle regulations:
+
+  RCW        — Revised Code of Washington (state statute)
+  WAC        — Washington Administrative Code (state regulations)
+  EXEC_ORDER — Washington Governor Executive Orders
+  IBC_WA     — International Building Code as adopted by Washington
+  SMC        — Seattle Municipal Code (city ordinance)
+  DIR        — Seattle Director's Rules (city admin interpretations)
+  SPU        — Seattle Public Utilities Design Standards
+  COURT      — Washington Supreme/Appellate Court opinions
+
+Your job: analyze the user's query and return ONLY valid JSON with
+these exact fields — no explanation, no markdown, no extra text.
+
+{
+  "mode": "A" | "B" | "C" | "D",
+  "agencies_in_scope": ["AGENCY", ...],
+  "agency_relevance": {"AGENCY": 1 | 2 | 3, ...},
+  "top_k": <integer>,
+  "requires_numerical_comparison": true | false
+}
+
+─── MODE RULES ───────────────────────────────────────────────────────────────
+
+A = FACTUAL: User wants to know what one set of rules says.
+    No comparison, no conflict analysis. Single agency focus.
+    Example: "What does SMC say about ADU height limits?"
+
+B = NAMED CONFLICT: User explicitly names 2 or 3 agencies.
+    Look for: "between DIR and IBC", "compare RCW and SMC", etc.
+    Example: "What are the conflicts between DIR rules and IBC on egress?"
+
+C = TOPIC CONFLICT: User wants conflicts on a topic but did NOT name agencies.
+    You decide which agencies are relevant. 2-6 agencies typical.
+    Example: "What EV charging conflicts should I know about?"
+
+D = FULL AUDIT: User describes a development scenario and wants all risks.
+    Trigger words: "audit", "all risks", "full analysis", "everything I need".
+    Example: "I'm building a 6-story mixed-use in SODO, what are all my risks?"
+
+─── AGENCY RELEVANCE SCORING (per query, not per agency) ────────────────────
+
+3 = Primary: This agency is the main source of rules for this query.
+    The question is primarily ABOUT this agency's domain.
+
+2 = Supporting: This agency likely has relevant provisions but is not
+    the main focus. Needed to check for conflict or supporting context.
+
+1 = Completeness: Include only because there might be something there.
+    Low confidence it's relevant. Included for thoroughness in C/D modes.
+
+─── TOP_K RULES ─────────────────────────────────────────────────────────────
+
+A (1 agency):        top_k = 12
+B (2 agencies):      top_k = 16
+B (3 agencies):      top_k = 20
+C (3-4 agencies):    top_k = 24
+C (5-6 agencies):    top_k = 32
+D (all agencies):    top_k = 40
+
+─── AGENCY SELECTION GUIDANCE ───────────────────────────────────────────────
+
+ALWAYS include COURT if query mentions any of:
+  court, lawsuit, ruling, nexus, constitutional, invalidated, exaction,
+  takings, challenged, overturned, legal precedent, appellate
+
+ALWAYS include IBC_WA if query mentions any of:
+  building code, egress, fire, structural, occupancy, accessible,
+  ADA, construction, height, setback (building-specific)
+
+ALWAYS include SPU if query mentions any of:
+  water main, sewer, drainage, stormwater, utility connection,
+  infrastructure, pipe, SPU, public utilities
+
+ALWAYS include EXEC_ORDER if query mentions any of:
+  governor, executive order, emergency directive, state emergency
+
+For general Seattle development questions: always include SMC + DIR + RCW.
+For state-level regulatory questions: always include RCW + WAC.
+"""</span>
+
+<span class="ck">async def</span> <span class="cf">analyze_query</span>(query: str) -> dict:
+    <span class="cs">"""
+    Analyzes a user query and returns structured routing metadata.
+
+    Returns dict with keys:
+      mode               : "A" | "B" | "C" | "D"
+      agencies_in_scope  : list of agency labels e.g. ["RCW", "SMC", "COURT"]
+      agency_relevance   : dict of agency → 1|2|3
+      top_k              : int, target final chunk count
+      requires_numerical_comparison : bool
+      collections        : dict of agency → ChromaDB collection name (added here)
+
+    Raises:
+      json.JSONDecodeError if LLM returns malformed JSON (rare at temp=0)
+      KeyError if LLM returns unknown agency label (caught in planner)
+    """</span>
+    resp = <span class="ck">await</span> oai.chat.completions.create(
+        model=LLM_FAST,             <span class="cm"># gpt-4o-mini — cheap, fast, deterministic</span>
+        messages=[
+            {<span class="cs">"role"</span>: <span class="cs">"system"</span>, <span class="cs">"content"</span>: ANALYZER_PROMPT},
+            {<span class="cs">"role"</span>: <span class="cs">"user"</span>,   <span class="cs">"content"</span>: query},
+        ],
+        response_format={<span class="cs">"type"</span>: <span class="cs">"json_object"</span>},  <span class="cm"># enforces valid JSON output</span>
+        temperature=0,              <span class="cm"># deterministic routing</span>
+        max_tokens=300,             <span class="cm"># JSON is small; cap to avoid wasted tokens</span>
+    )
+
+    result = json.loads(resp.choices[0].message.content)
+
+    <span class="cm"># Resolve agency labels → your actual ChromaDB collection names</span>
+    <span class="cm"># Only include agencies that exist in COLLECTION_MAP (safety filter)</span>
+    result[<span class="cs">"collections"</span>] = {
+        ag: COLLECTION_MAP[ag]
+        <span class="ck">for</span> ag <span class="ck">in</span> result[<span class="cs">"agencies_in_scope"</span>]
+        <span class="ck">if</span> ag <span class="ck">in</span> COLLECTION_MAP
+    }
+
+    <span class="ck">return</span> result</pre>
+
+  </div>
+
+  <div class="sub" id="s1-test">
+    <div class="sub-title">Test Step 1 in isolation</div>
+    <p>Before moving to Step 2, run this in a Python shell to verify the analyzer works:</p>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> retrieval.analyzer <span class="ck">import</span> analyze_query
+
+<span class="cm"># Test Mode A — factual</span>
+r = asyncio.run(analyze_query(<span class="cs">"What does SMC say about ADU setback requirements?"</span>))
+<span class="ck">assert</span> r[<span class="cs">"mode"</span>] == <span class="cs">"A"</span>
+<span class="ck">assert</span> <span class="cs">"SMC"</span> <span class="ck">in</span> r[<span class="cs">"agencies_in_scope"</span>]
+<span class="ck">assert</span> r[<span class="cs">"top_k"</span>] == 12
+<span class="ck">print</span>(<span class="cs">"Mode A OK"</span>, r)
+
+<span class="cm"># Test Mode B — named conflict</span>
+r = asyncio.run(analyze_query(<span class="cs">"What are the conflicts between DIR rules and IBC on egress?"</span>))
+<span class="ck">assert</span> r[<span class="cs">"mode"</span>] == <span class="cs">"B"</span>
+<span class="ck">assert</span> <span class="cs">"DIR"</span> <span class="ck">in</span> r[<span class="cs">"agencies_in_scope"</span>]
+<span class="ck">assert</span> <span class="cs">"IBC_WA"</span> <span class="ck">in</span> r[<span class="cs">"agencies_in_scope"</span>]
+<span class="ck">print</span>(<span class="cs">"Mode B OK"</span>, r)
+
+<span class="cm"># Test COURT trigger</span>
+r = asyncio.run(analyze_query(<span class="cs">"Can the city impose off-site water main costs as a permit condition?"</span>))
+<span class="ck">assert</span> <span class="cs">"COURT"</span> <span class="ck">in</span> r[<span class="cs">"agencies_in_scope"</span>]
+<span class="ck">print</span>(<span class="cs">"COURT trigger OK"</span>, r)</pre>
+
+    <div class="callout warn">
+      <div class="callout-title">If COURT is missing</div>
+      <p>Add the specific trigger words from your query to the ALWAYS include COURT section of the prompt. The LLM follows the prompt literally — if the trigger word isn't listed, it may miss COURT.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STEP 2 ═══ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <span class="step-badge">STEP 2 OF 7</span>
+    <h2 class="section-title">Query Planner</h2>
+  </div>
+
+  <div class="sub" id="s2-concept">
+    <div class="sub-title">What this step does and why</div>
+    <p>The planner takes the analyzer's JSON output and converts it into a list of concrete retrieval tasks — one task per agency. Each task specifies exactly how many candidates to fetch from that agency's ChromaDB collection.</p>
+    <p>This is where the three-factor weighting system is applied:</p>
+    <ol class="steps">
+      <li><strong>Corpus size weight</strong> — WAC has 4,300 files. To have a fair chance of finding the right chunk, you need to fetch proportionally more candidates from it than from SPU which has 14 files.</li>
+      <li><strong>Query relevance score</strong> — from the analyzer. An agency with relevance=3 needs more candidates because we must have enough text from it to quote in the friction matrix.</li>
+      <li><strong>Floor</strong> — the minimum candidates per agency regardless of the math, to ensure no agency gets accidentally zeroed out by low weights.</li>
+    </ol>
+  </div>
+
+  <div class="sub" id="s2-budget">
+    <div class="sub-title">Budget calculation — worked example</div>
+    <p>Using the water main query: Mode C, 4 agencies, top_k=28.</p>
+    <p><strong>Total candidate pool</strong> = top_k × 3 = 84 candidates. The 3× multiplier gives the reranker enough material to work with.</p>
+    <p><strong>Raw weight per agency</strong> = corpus_weight × relevance_score</p>
+    <table>
+      <thead><tr><th>Agency</th><th>Corpus weight</th><th>Relevance</th><th>Raw weight</th><th>% of total</th><th>Proportional share of 84</th><th>Floor</th><th>Final</th></tr></thead>
+      <tbody>
+        <tr><td>COURT</td><td>1.5</td><td>3</td><td>4.5</td><td>28%</td><td>24</td><td>8</td><td><strong>24</strong></td></tr>
+        <tr><td>RCW</td><td>2.0</td><td>2</td><td>4.0</td><td>25%</td><td>21</td><td>6</td><td><strong>21</strong></td></tr>
+        <tr><td>SPU</td><td>1.0</td><td>3</td><td>3.0</td><td>19%</td><td>16</td><td>5</td><td><strong>16</strong></td></tr>
+        <tr><td>SMC</td><td>1.0</td><td>2</td><td>2.0</td><td>13%</td><td>11</td><td>6</td><td><strong>11</strong></td></tr>
+        <tr><td colspan="6" style="color:var(--text3)">Total</td><td colspan="2"><strong>72 candidates fetched</strong></td></tr>
+      </tbody>
+    </table>
+    <p>COURT gets the most candidates (24) because it has relevance=3 AND there is a direct court case about permit exactions. RCW gets 21 because it has a large corpus. SPU gets 16 despite a small corpus because relevance=3. SMC hits its floor of 11 (the formula gave 11, which exceeds the floor of 6).</p>
+  </div>
+
+  <div class="sub" id="s2-code">
+    <div class="sub-title">agents/planner.py — create this file</div>
+    <p>Create the folder <code>agents/</code> at your project root, then create this file.</p>
+
+    <div class="file-label">agents/planner.py</div>
+    <pre><span class="ck">from</span> dataclasses <span class="ck">import</span> dataclass
+<span class="ck">from</span> config <span class="ck">import</span> CORPUS_WEIGHT, AUTHORITY_RANK
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# AGENCY TASK
+# A dataclass is used instead of a plain dict to catch typos early
+# (e.g. task.agensy raises AttributeError, task["agensy"] returns None)
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+@dataclass
+<span class="ck">class</span> <span class="cf">AgencyTask</span>:
+    agency:       str    <span class="cm"># canonical label e.g. "RCW"</span>
+    collection:   str    <span class="cm"># ChromaDB collection name e.g. "rcw_chapters"</span>
+    query:        str    <span class="cm"># the search query to run against this collection</span>
+    n_candidates: int    <span class="cm"># how many raw results to fetch before reranking</span>
+    relevance:    int    <span class="cm"># 1|2|3 — kept here for use in collector's floor logic</span>
+    boost_numbers: bool  <span class="cm"># True if query involves fees/dimensions/thresholds</span>
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# CONFLICT FLOORS
+# Minimum candidates to fetch in conflict modes (B / C / D) regardless
+# of weight calculation.
+# Rationale:
+#   COURT=8  — opinions are long, dense, and surface poorly in vector search.
+#              Need extra candidates to reliably find relevant precedent.
+#   RCW=6    — large corpus, 6 is barely enough for meaningful coverage.
+#   SMC=6    — city ordinance is always needed for city conflict queries.
+#   Others=4 — basic floor to avoid accidentally zeroing out small agencies.
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+CONFLICT_FLOOR = {
+    <span class="cs">"COURT"</span>:      8,
+    <span class="cs">"RCW"</span>:        6,
+    <span class="cs">"WAC"</span>:        6,
+    <span class="cs">"SMC"</span>:        6,
+    <span class="cs">"DIR"</span>:        4,
+    <span class="cs">"IBC_WA"</span>:     4,
+    <span class="cs">"SPU"</span>:        4,
+    <span class="cs">"EXEC_ORDER"</span>: 4,
+}
+
+FACTUAL_FLOOR = 3  <span class="cm"># Mode A — minimal floor, reranker handles the rest</span>
+
+<span class="ck">def</span> <span class="cf">calculate_budget</span>(
+    agencies:   list[str],
+    relevance:  dict[str, int],
+    top_k:      int,
+    mode:       str,
+) -> dict[str, int]:
+    <span class="cs">"""
+    Returns {agency: n_candidates} — how many raw candidates to
+    pull from each agency's ChromaDB collection.
+
+    The total candidate pool is top_k * 3 (3x headroom for the reranker).
+    Each agency gets a share proportional to:
+        corpus_weight * query_relevance_score
+    Subject to a minimum floor depending on mode.
+
+    Parameters:
+        agencies  : list of agency labels from analyzer e.g. ["RCW","SMC","COURT"]
+        relevance : dict from analyzer e.g. {"RCW":2, "SMC":2, "COURT":3}
+        top_k     : target final chunk count from analyzer
+        mode      : "A"|"B"|"C"|"D" from analyzer
+    """</span>
+    is_conflict = mode <span class="ck">in</span> (<span class="cs">"B"</span>, <span class="cs">"C"</span>, <span class="cs">"D"</span>)
+    total_pool  = top_k * 3   <span class="cm"># e.g. top_k=28 → 84 candidates to fetch total</span>
+
+    <span class="cm"># Step A: raw weight per agency = corpus size × query relevance</span>
+    raw = {
+        ag: CORPUS_WEIGHT.get(ag, 1.0) * relevance.get(ag, 1)
+        <span class="ck">for</span> ag <span class="ck">in</span> agencies
+    }
+    total_weight = sum(raw.values())
+
+    <span class="cm"># Step B: proportional share of the candidate pool</span>
+    proportional = {
+        ag: int(total_pool * (w / total_weight))
+        <span class="ck">for</span> ag, w <span class="ck">in</span> raw.items()
+    }
+
+    <span class="cm"># Step C: apply floors</span>
+    floor = CONFLICT_FLOOR <span class="ck">if</span> is_conflict <span class="ck">else</span> {}
+    allocation = {
+        ag: max(floor.get(ag, FACTUAL_FLOOR), proportional[ag])
+        <span class="ck">for</span> ag <span class="ck">in</span> agencies
+    }
+
+    <span class="ck">return</span> allocation
+
+
+<span class="ck">def</span> <span class="cf">plan_tasks</span>(query: str, analysis: dict) -> list[AgencyTask]:
+    <span class="cs">"""
+    Converts analyzer output into a list of AgencyTask objects.
+    One task per agency in scope.
+
+    Parameters:
+        query    : the original user query string
+        analysis : the dict returned by analyze_query()
+
+    Returns:
+        list of AgencyTask, sorted by authority rank (highest authority first)
+        so logs are easier to read.
+    """</span>
+    agencies    = analysis[<span class="cs">"agencies_in_scope"</span>]
+    relevance   = analysis.get(<span class="cs">"agency_relevance"</span>, {ag: 2 <span class="ck">for</span> ag <span class="ck">in</span> agencies})
+    mode        = analysis[<span class="cs">"mode"</span>]
+    top_k       = analysis[<span class="cs">"top_k"</span>]
+    collections = analysis[<span class="cs">"collections"</span>]
+    boost       = analysis.get(<span class="cs">"requires_numerical_comparison"</span>, False)
+
+    allocation  = calculate_budget(agencies, relevance, top_k, mode)
+
+    tasks = []
+    <span class="ck">for</span> ag <span class="ck">in</span> agencies:
+        <span class="ck">if</span> ag <span class="ck">not in</span> collections:
+            <span class="ck">continue</span>  <span class="cm"># skip if collection not found</span>
+        tasks.append(AgencyTask(
+            agency        = ag,
+            collection    = collections[ag],
+            query         = query,
+            n_candidates  = allocation[ag],
+            relevance     = relevance.get(ag, 1),
+            boost_numbers = boost,
+        ))
+
+    <span class="cm"># Sort by authority rank so COURT tasks appear first in logs</span>
+    tasks.sort(key=<span class="ck">lambda</span> t: AUTHORITY_RANK.get(t.agency, 99))
+    <span class="ck">return</span> tasks</pre>
+  </div>
+
+  <div class="sub" id="s2-test">
+    <div class="sub-title">Test Step 2 in isolation</div>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> retrieval.analyzer <span class="ck">import</span> analyze_query
+<span class="ck">from</span> agents.planner <span class="ck">import</span> plan_tasks
+
+query    = <span class="cs">"Can the city force me to pay for off-site water main upgrades?"</span>
+analysis = asyncio.run(analyze_query(query))
+tasks    = plan_tasks(query, analysis)
+
+<span class="ck">for</span> t <span class="ck">in</span> tasks:
+    print(f<span class="cs">"{t.agency:12} collection={t.collection:30} candidates={t.n_candidates:3} relevance={t.relevance}"</span>)
+
+<span class="cm"># Expected output (approximate):
+# COURT        collection=washington_court_opinions    candidates=24  relevance=3
+# RCW          collection=rcw_chapters                candidates=21  relevance=2
+# SPU          collection=spu_design_standards         candidates=16  relevance=3
+# SMC          collection=smc_chapters                candidates=11  relevance=2</span></pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 3 ═══ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <span class="step-badge">STEP 3 OF 7</span>
+    <h2 class="section-title">Parallel Agency Retriever</h2>
+  </div>
+
+  <div class="sub" id="s3-concept">
+    <div class="sub-title">What this step does and why</div>
+    <p>This is the core of the multi-agent design. Instead of searching one ChromaDB collection at a time, we launch all agency searches simultaneously using Python's <code>asyncio.gather</code>.</p>
+    <p>Think of it like sending four people to four filing cabinets at the same time instead of one person going to each cabinet one after another. Total time = slowest single search, not the sum of all searches.</p>
+    <p>Each retriever does exactly what your existing code already does against ChromaDB — a vector similarity search using the query embedding. The only difference is it runs concurrently with the others, and each result is tagged with its agency label so the collector knows where it came from.</p>
+
+    <div class="callout info">
+      <div class="callout-title">Why the query vector is computed once and shared</div>
+      <p>All agencies use the same query embedding. Computing it once and passing it to all retrievers avoids making 4-8 identical embedding API calls. This saves cost and ~400ms of latency per search.</p>
+    </div>
+  </div>
+
+  <div class="sub" id="s3-code">
+    <div class="sub-title">agents/retriever.py — create this file</div>
+
+    <div class="file-label">agents/retriever.py</div>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> openai <span class="ck">import</span> AsyncOpenAI
+<span class="ck">import</span> chromadb
+<span class="ck">from</span> config <span class="ck">import</span> CHROMA_PATH, EMBED_MODEL, EMBED_DIMS
+<span class="ck">from</span> agents.planner <span class="ck">import</span> AgencyTask
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# CLIENTS
+# Initialized once at module load — not inside each function call.
+# Initializing chromadb.PersistentClient inside each async call causes
+# file handle leaks and slows startup significantly.
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+oai    = AsyncOpenAI()
+client = chromadb.PersistentClient(path=CHROMA_PATH)
+
+
+<span class="ck">async def</span> <span class="cf">embed_query</span>(text: str) -> list[float]:
+    <span class="cs">"""
+    Embeds the user's query into a vector.
+    This is called ONCE per user query and the result is passed
+    to all agency retrievers — do not call this inside retrieve_agency().
+
+    Returns:
+        list of floats — 3072 dimensions for text-embedding-3-large
+    """</span>
+    resp = <span class="ck">await</span> oai.embeddings.create(
+        input=text,
+        model=EMBED_MODEL,
+        dimensions=EMBED_DIMS,
+    )
+    <span class="ck">return</span> resp.data[0].embedding
+
+
+<span class="ck">def</span> <span class="cf">_normalize_metadata</span>(meta: dict) -> dict:
+    <span class="cs">"""
+    ChromaDB stores only flat scalar values in metadata.
+    If your indexer serialized lists to pipe-separated strings
+    (e.g. section_ids = "RCW 82.02|RCW 82.03"), deserialize them here.
+
+    If your metadata uses different field names, update this function.
+    If a field doesn't exist, we return a safe default — never crash here.
+    """</span>
+    raw_sections = meta.get(<span class="cs">"section_ids"</span>, <span class="cs">""</span>)
+    sections = [s <span class="ck">for</span> s <span class="ck">in</span> raw_sections.split(<span class="cs">"|"</span>) <span class="ck">if</span> s] <span class="ck">if</span> raw_sections <span class="ck">else</span> []
+    <span class="ck">return</span> {
+        **meta,
+        <span class="cs">"section_ids"</span>: sections,
+        <span class="cs">"has_numbers"</span>: bool(meta.get(<span class="cs">"has_numbers"</span>, 0)),
+        <span class="cm"># add any other fields your indexer serialized differently</span>
+    }
+
+
+<span class="ck">async def</span> <span class="cf">retrieve_agency</span>(task: AgencyTask, query_vector: list[float]) -> dict:
+    <span class="cs">"""
+    Searches ONE agency's ChromaDB collection and returns its results.
+    This function runs concurrently with other retrieve_agency calls.
+
+    Parameters:
+        task         : AgencyTask from planner — has collection name and n_candidates
+        query_vector : pre-computed embedding from embed_query()
+
+    Returns:
+        dict with keys:
+            agency  : agency label e.g. "RCW"
+            chunks  : list of chunk dicts, each with text, metadata, distance
+                      Empty list if collection not found or error occurs.
+    """</span>
+    <span class="ck">try</span>:
+        collection = client.get_collection(task.collection)
+    <span class="ck">except</span> Exception <span class="ck">as</span> e:
+        <span class="cm"># Collection doesn't exist — return empty rather than crash the whole query</span>
+        print(f<span class="cs">"[retriever] Collection not found: {task.collection} — {e}"</span>)
+        <span class="ck">return</span> {<span class="cs">"agency"</span>: task.agency, <span class="cs">"chunks"</span>: []}
+
+    <span class="cm"># n_results cannot exceed the collection's actual document count</span>
+    n = min(task.n_candidates, collection.count())
+    <span class="ck">if</span> n == 0:
+        <span class="ck">return</span> {<span class="cs">"agency"</span>: task.agency, <span class="cs">"chunks"</span>: []}
+
+    results = collection.query(
+        query_embeddings=[query_vector],
+        n_results=n,
+        include=[<span class="cs">"documents"</span>, <span class="cs">"metadatas"</span>, <span class="cs">"distances"</span>],
+    )
+
+    <span class="cm"># ChromaDB returns results nested in lists because it supports batch queries.
+    # [0] unwraps the first (and only) query's results.</span>
+    chunks = []
+    <span class="ck">for</span> cid, doc, meta, dist <span class="ck">in</span> zip(
+        results[<span class="cs">"ids"</span>][0],
+        results[<span class="cs">"documents"</span>][0],
+        results[<span class="cs">"metadatas"</span>][0],
+        results[<span class="cs">"distances"</span>][0],
+    ):
+        chunks.append({
+            <span class="cs">"chunk_id"</span>:    cid,
+            <span class="cs">"text"</span>:        doc,
+            <span class="cs">"agency"</span>:      task.agency,   <span class="cm"># IMPORTANT: tag with agency</span>
+            <span class="cs">"relevance"</span>:   task.relevance, <span class="cm"># passed through for collector</span>
+            <span class="cs">"cosine_dist"</span>: dist,           <span class="cm"># lower = more similar</span>
+            **_normalize_metadata(meta),
+        })
+
+    <span class="ck">return</span> {<span class="cs">"agency"</span>: task.agency, <span class="cs">"chunks"</span>: chunks}
+
+
+<span class="ck">async def</span> <span class="cf">retrieve_all_parallel</span>(
+    tasks: list[AgencyTask],
+    query_vector: list[float],
+) -> list[dict]:
+    <span class="cs">"""
+    Runs all agency retrievals simultaneously.
+
+    asyncio.gather fires all coroutines at once and waits for all to finish.
+    Total latency = slowest single agency search (not the sum of all).
+    return_exceptions=True means one failed agency doesn't crash the others.
+
+    Parameters:
+        tasks        : list of AgencyTask from plan_tasks()
+        query_vector : pre-computed embedding from embed_query()
+
+    Returns:
+        list of {agency, chunks} dicts — one per successful agency.
+        Failed agencies are logged and excluded from the result.
+    """</span>
+    coroutines = [retrieve_agency(t, query_vector) <span class="ck">for</span> t <span class="ck">in</span> tasks]
+    raw        = <span class="ck">await</span> asyncio.gather(*coroutines, return_exceptions=True)
+
+    valid = []
+    <span class="ck">for</span> i, r <span class="ck">in</span> enumerate(raw):
+        <span class="ck">if</span> isinstance(r, Exception):
+            print(f<span class="cs">"[retriever] {tasks[i].agency} failed: {r}"</span>)
+        <span class="ck">elif</span> r[<span class="cs">"chunks"</span>]:          <span class="cm"># exclude agencies that returned nothing</span>
+            valid.append(r)
+        <span class="ck">else</span>:
+            print(f<span class="cs">"[retriever] {tasks[i].agency} returned 0 chunks"</span>)
+
+    <span class="ck">return</span> valid</pre>
+  </div>
+
+  <div class="sub" id="s3-test">
+    <div class="sub-title">Test Step 3 in isolation</div>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> retrieval.analyzer  <span class="ck">import</span> analyze_query
+<span class="ck">from</span> agents.planner      <span class="ck">import</span> plan_tasks
+<span class="ck">from</span> agents.retriever    <span class="ck">import</span> embed_query, retrieve_all_parallel
+
+query    = <span class="cs">"Can the city force me to pay for off-site water main upgrades?"</span>
+analysis = asyncio.run(analyze_query(query))
+tasks    = plan_tasks(query, analysis)
+vector   = asyncio.run(embed_query(query))
+results  = asyncio.run(retrieve_all_parallel(tasks, vector))
+
+<span class="ck">for</span> res <span class="ck">in</span> results:
+    print(f<span class="cs">"{res['agency']:12} → {len(res['chunks']):3} chunks fetched"</span>)
+<span class="ck">print</span>(f<span class="cs">"Total candidates: {sum(len(r['chunks']) for r in results)}"</span>)
+
+<span class="cm"># Expected output:
+# COURT        →  24 chunks fetched
+# RCW          →  21 chunks fetched
+# SPU          →  16 chunks fetched
+# SMC          →  11 chunks fetched
+# Total candidates: 72</span></pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 4 ═══ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <span class="step-badge">STEP 4 OF 7</span>
+    <h2 class="section-title">Cross-Encoder Reranker</h2>
+  </div>
+
+  <div class="sub" id="s4-concept">
+    <div class="sub-title">What this step does and why</div>
+    <p>Vector search finds chunks that are <em>about similar topics</em> as your query. The cross-encoder finds chunks that are <em>actually useful for answering</em> your query. These are different.</p>
+    <p>A vector search for "permit exaction nexus test" surfaces chunks about permits and about nexus — but might rank a general overview of permit types above the specific subsection that defines the nexus test standard. The cross-encoder reads the query and chunk together as a pair and scores how well the chunk answers the query. It understands that a 3-sentence subsection defining the nexus test is far more useful than a 2-page overview that mentions nexus once.</p>
+    <p>It runs after all agency candidates are pooled together — so it compares SPU chunks against RCW chunks against COURT chunks on equal footing, using the same relevance scale.</p>
+  </div>
+
+  <div class="sub" id="s4-code">
+    <div class="sub-title">retrieval/reranker.py — create this file</div>
+
+    <div class="file-label">retrieval/reranker.py</div>
+    <pre><span class="ck">from</span> sentence_transformers <span class="ck">import</span> CrossEncoder
+
+<span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# RERANKER MODEL
+#
+# cross-encoder/ms-marco-MiniLM-L-6-v2
+#   — Downloads ~85 MB on first run, cached to ~/.cache/huggingface
+#   — Outputs logit scores (can be negative) — higher = more relevant
+#   — Runs entirely locally — no API call
+#   — batch_size=32 is safe on CPU; increase if you have a GPU
+#
+# To upgrade later (better accuracy, more resources):
+#   cross-encoder/ms-marco-MiniLM-L-12-v2  (~170 MB, ~2x slower, ~5% better)
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ck">class</span> <span class="cf">LegalReranker</span>:
+
+    <span class="ck">def</span> <span class="cf">__init__</span>(self):
+        <span class="cm"># Load model once at startup — not per query</span>
+        self.model = CrossEncoder(<span class="cs">"cross-encoder/ms-marco-MiniLM-L-6-v2"</span>)
+
+    <span class="ck">def</span> <span class="cf">rerank</span>(
+        self,
+        query:      str,
+        candidates: list[dict],
+        top_k:      int,
+    ) -> list[dict]:
+        <span class="cs">"""
+        Scores all (query, chunk) pairs with the cross-encoder,
+        sorts by score descending, returns top_k.
+
+        Parameters:
+            query      : the original user query string
+            candidates : flat list of chunk dicts from all agencies
+            top_k      : how many to return after scoring
+
+        Returns:
+            list of chunk dicts sorted by rerank_score (best first),
+            truncated to top_k. Each chunk gets a "rerank_score" field added.
+        """</span>
+        <span class="ck">if not</span> candidates:
+            <span class="ck">return</span> []
+
+        <span class="cm"># Build (query, chunk_text) pairs — the cross-encoder reads both together</span>
+        pairs  = [(query, c[<span class="cs">"text"</span>]) <span class="ck">for</span> c <span class="ck">in</span> candidates]
+
+        <span class="cm"># predict() returns a numpy array of scores, one per pair</span>
+        scores = self.model.predict(pairs, batch_size=32)
+
+        <span class="cm"># Attach score to each chunk and sort</span>
+        ranked = sorted(
+            zip(candidates, scores),
+            key=<span class="ck">lambda</span> x: x[1],
+            reverse=True,   <span class="cm"># higher score = more relevant</span>
+        )
+
+        result = []
+        <span class="ck">for</span> chunk, score <span class="ck">in</span> ranked[:top_k * 2]:  <span class="cm"># keep 2× for collector's two-pass</span>
+            chunk[<span class="cs">"rerank_score"</span>] = float(score)
+            result.append(chunk)
+
+        <span class="ck">return</span> result</pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 5 ═══ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <span class="step-badge">STEP 5 OF 7</span>
+    <h2 class="section-title">Evidence Collector</h2>
+  </div>
+
+  <div class="sub" id="s5-concept">
+    <div class="sub-title">What this step does</div>
+    <p>The collector receives the full reranked pool and selects the final top_k chunks that go into the context window. For Mode A this is trivial — just take the top N. For Modes B/C/D it requires the two-pass selection to guarantee balanced evidence across conflict pairs.</p>
+  </div>
+
+  <div class="sub" id="s5-twopass">
+    <div class="sub-title">The two-pass selection explained</div>
+    <p>The reranker's job is to find the globally best chunks. But "globally best" does not mean "best for building a friction matrix." A Mode C query about EV charging might produce this after pure reranking:</p>
+    <table>
+      <thead><tr><th>Rank</th><th>Agency</th><th>Score</th></tr></thead>
+      <tbody>
+        <tr><td>1–8</td><td>WAC</td><td>0.85–0.72</td></tr>
+        <tr><td>9–16</td><td>WAC</td><td>0.71–0.60</td></tr>
+        <tr><td>17–20</td><td>SMC</td><td>0.55–0.50</td></tr>
+        <tr><td>21–28</td><td>WAC</td><td>0.49–0.40</td></tr>
+      </tbody>
+    </table>
+    <p>WAC dominates because it has 4,300 files and many EV-related chunks. SMC and SPU appear at the bottom. But you cannot build a WAC×SMC friction pair with only 4 SMC chunks at rank 17-20. You need guaranteed representation.</p>
+    <p><strong>Pass 1 — Reserve slots for guaranteed agencies</strong></p>
+    <p>The floor depends on the analyzer's relevance score for this specific query. Relevance=3 agencies get 2 guaranteed slots. Relevance=2 get 1. Relevance=1 get 0. COURT always gets 2 in conflict modes regardless of relevance.</p>
+    <p>The key: guaranteed slots take the <em>best-scoring chunks from that agency</em> — not random ones. So even the guaranteed COURT slots are the highest-quality COURT chunks from the reranked pool.</p>
+    <p><strong>Pass 2 — Fill remaining slots with global best</strong></p>
+    <p>After reserved slots are filled, the remaining spots go to the globally best reranked chunks not already selected. This is where WAC's strong performance shows up — it fills most of the remaining slots on merit.</p>
+    <p><strong>Pair coverage check</strong></p>
+    <p>Final sanity check: for every intended conflict pair (A × B), both agencies need at least 1 chunk in the final set. If not, force in the top-scoring chunk from the missing agency. This catches edge cases where an agency's chunks all scored below the floor threshold.</p>
+  </div>
+
+  <div class="sub" id="s5-code">
+    <div class="sub-title">agents/collector.py — create this file</div>
+
+    <div class="file-label">agents/collector.py</div>
+    <pre><span class="ck">from</span> itertools <span class="ck">import</span> combinations
+<span class="ck">from</span> retrieval.reranker <span class="ck">import</span> LegalReranker
+<span class="ck">from</span> config <span class="ck">import</span> AUTHORITY_RANK
+
+<span class="cm"># Single reranker instance — model loaded once at startup</span>
+reranker = LegalReranker()
+
+
+<span class="ck">def</span> <span class="cf">_get_guaranteed_slots</span>(agency: str, relevance: int, mode: str) -> int:
+    <span class="cs">"""
+    Returns the number of slots this agency is guaranteed in the final output.
+    This is query-dependent (via relevance) not fixed per agency.
+
+    Logic:
+        COURT in conflict mode  → always 2 (binding precedent must appear)
+        relevance 3             → 2 slots (primary agency, need enough to quote)
+        relevance 2             → 1 slot (supporting, needs presence)
+        relevance 1             → 0 slots (trust the reranker entirely)
+        Mode A                  → 0 for all (pure reranker result)
+    """</span>
+    <span class="ck">if</span> mode == <span class="cs">"A"</span>:
+        <span class="ck">return</span> 0
+    <span class="ck">if</span> agency == <span class="cs">"COURT"</span>:
+        <span class="ck">return</span> 2
+    <span class="ck">if</span> relevance == 3:
+        <span class="ck">return</span> 2
+    <span class="ck">if</span> relevance == 2:
+        <span class="ck">return</span> 1
+    <span class="ck">return</span> 0  <span class="cm"># relevance == 1 — reranker decides</span>
+
+
+<span class="ck">def</span> <span class="cf">collect_evidence</span>(
+    agency_results:   list[dict],
+    query:            str,
+    top_k:            int,
+    mode:             str,
+    agency_relevance: dict[str, int],
+) -> list[dict]:
+    <span class="cs">"""
+    Merges, deduplicates, reranks, and selects the final top_k chunks.
+
+    Parameters:
+        agency_results   : list of {agency, chunks} from retrieve_all_parallel()
+        query            : original user query string
+        top_k            : target final chunk count from analyzer
+        mode             : "A"|"B"|"C"|"D" from analyzer
+        agency_relevance : {agency: 1|2|3} from analyzer
+
+    Returns:
+        list of chunk dicts, length <= top_k, sorted by rerank_score descending.
+        Each chunk guaranteed to have: chunk_id, text, agency, rerank_score.
+    """</span>
+
+    <span class="cm"># ── 1. FLATTEN AND DEDUPLICATE ────────────────────────────────────────────
+    # Flatten all agency results into one list.
+    # Deduplicate by chunk_id — same doc can appear in multiple collection
+    # results if chunk boundaries overlap across ingestion runs.</span>
+    seen, unique = set(), []
+    <span class="ck">for</span> res <span class="ck">in</span> agency_results:
+        <span class="ck">for</span> c <span class="ck">in</span> res[<span class="cs">"chunks"</span>]:
+            <span class="ck">if</span> c[<span class="cs">"chunk_id"</span>] <span class="ck">not in</span> seen:
+                seen.add(c[<span class="cs">"chunk_id"</span>])
+                unique.append(c)
+
+    <span class="ck">if not</span> unique:
+        <span class="ck">return</span> []
+
+    <span class="cm"># ── 2. GLOBAL CROSS-ENCODER RERANK ────────────────────────────────────────
+    # Score all candidates against the query together.
+    # top_k * 4 gives the collector enough material for two-pass selection.</span>
+    ranked = reranker.rerank(query, unique, top_k=top_k * 4)
+
+    <span class="cm"># Build per-agency sorted lists from the reranked pool</span>
+    by_agency: dict[str, list] = {}
+    <span class="ck">for</span> chunk <span class="ck">in</span> ranked:
+        by_agency.setdefault(chunk[<span class="cs">"agency"</span>], []).append(chunk)
+    <span class="cm"># by_agency[ag] is already sorted best-first because `ranked` is sorted</span>
+
+    <span class="cm"># ── 3. MODE A FAST PATH ───────────────────────────────────────────────────</span>
+    <span class="ck">if</span> mode == <span class="cs">"A"</span>:
+        <span class="ck">return</span> ranked[:top_k]
+
+    <span class="cm"># ── 4. TWO-PASS SELECTION (Modes B / C / D) ───────────────────────────────</span>
+
+    agencies_present = {r[<span class="cs">"agency"</span>] <span class="ck">for</span> r <span class="ck">in</span> agency_results <span class="ck">if</span> r[<span class="cs">"chunks"</span>]}
+    used_ids = set()
+    guaranteed = []
+
+    <span class="cm"># PASS 1: Reserve guaranteed slots per agency
+    # Iterate in authority order (COURT first) so highest-authority
+    # agencies get their pick before lower-authority ones.</span>
+    sorted_agencies = sorted(
+        agencies_present,
+        key=<span class="ck">lambda</span> a: AUTHORITY_RANK.get(a, 99)
+    )
+
+    <span class="ck">for</span> ag <span class="ck">in</span> sorted_agencies:
+        rel    = agency_relevance.get(ag, 1)
+        slots  = _get_guaranteed_slots(ag, rel, mode)
+        taken  = 0
+        <span class="ck">for</span> chunk <span class="ck">in</span> by_agency.get(ag, []):
+            <span class="ck">if</span> taken >= slots:
+                <span class="ck">break</span>
+            guaranteed.append(chunk)
+            used_ids.add(chunk[<span class="cs">"chunk_id"</span>])
+            taken += 1
+
+    <span class="cm"># PASS 2: Fill remaining slots with globally best unreserved chunks</span>
+    fill = []
+    <span class="ck">for</span> chunk <span class="ck">in</span> ranked:
+        <span class="ck">if</span> len(guaranteed) + len(fill) >= top_k:
+            <span class="ck">break</span>
+        <span class="ck">if</span> chunk[<span class="cs">"chunk_id"</span>] <span class="ck">not in</span> used_ids:
+            fill.append(chunk)
+
+    final = guaranteed + fill
+
+    <span class="cm"># ── 5. PAIR COVERAGE CHECK ────────────────────────────────────────────────
+    # For every intended conflict pair, both agencies need ≥1 chunk.
+    # If an agency is missing entirely, force in its top-scoring chunk.
+    # This catches edge cases — it should rarely fire if budget is set correctly.</span>
+    <span class="ck">if</span> len(agencies_present) >= 2:
+        final_agencies = {c[<span class="cs">"agency"</span>] <span class="ck">for</span> c <span class="ck">in</span> final}
+        pairs = <span class="cn">list</span>(combinations(
+            [a <span class="ck">for</span> a <span class="ck">in</span> agencies_present <span class="ck">if</span> a != <span class="cs">"COURT"</span>], 2
+        ))
+        <span class="ck">for</span> ag_a, ag_b <span class="ck">in</span> pairs:
+            <span class="ck">for</span> missing <span class="ck">in</span> [ag_a, ag_b]:
+                <span class="ck">if</span> missing <span class="ck">not in</span> final_agencies:
+                    <span class="cm"># Force in top-scoring chunk from missing agency</span>
+                    rescue = by_agency.get(missing, [])
+                    <span class="ck">if</span> rescue:
+                        final.append(rescue[0])
+                        final_agencies.add(missing)
+                        print(f<span class="cs">"[collector] Pair rescue: forced in {missing}"</span>)
+
+    <span class="cm"># ── 6. FINAL SORT AND TRIM ────────────────────────────────────────────────
+    # Re-sort by rerank_score so context block is ordered best-first.
+    # Trim to top_k in case pair rescue added extra chunks.</span>
+    final.sort(key=<span class="ck">lambda</span> c: c.get(<span class="cs">"rerank_score"</span>, 0), reverse=True)
+    <span class="ck">return</span> final[:top_k]</pre>
+  </div>
+
+  <div class="sub" id="s5-test">
+    <div class="sub-title">Test Step 5 — full pipeline to here</div>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> retrieval.analyzer  <span class="ck">import</span> analyze_query
+<span class="ck">from</span> agents.planner      <span class="ck">import</span> plan_tasks
+<span class="ck">from</span> agents.retriever    <span class="ck">import</span> embed_query, retrieve_all_parallel
+<span class="ck">from</span> agents.collector    <span class="ck">import</span> collect_evidence
+<span class="ck">from</span> collections         <span class="ck">import</span> Counter
+
+<span class="ck">async def</span> <span class="cf">test</span>():
+    query    = <span class="cs">"What are all the EV charging conflicts I need to know about for my apartment building?"</span>
+    analysis = <span class="ck">await</span> analyze_query(query)
+    tasks    = plan_tasks(query, analysis)
+    vector   = <span class="ck">await</span> embed_query(query)
+    results  = <span class="ck">await</span> retrieve_all_parallel(tasks, vector)
+    final    = collect_evidence(
+        results,
+        query,
+        analysis[<span class="cs">"top_k"</span>],
+        analysis[<span class="cs">"mode"</span>],
+        analysis[<span class="cs">"agency_relevance"</span>],
+    )
+
+    agency_counts = Counter(c[<span class="cs">"agency"</span>] <span class="ck">for</span> c <span class="ck">in</span> final)
+    print(f<span class="cs">"Final {len(final)} chunks:"</span>)
+    <span class="ck">for</span> ag, count <span class="ck">in</span> sorted(agency_counts.items()):
+        print(f<span class="cs">"  {ag:12} {count} chunks"</span>)
+
+    <span class="cm"># Verify no agency with relevance>=2 is completely absent</span>
+    <span class="ck">for</span> ag, rel <span class="ck">in</span> analysis[<span class="cs">"agency_relevance"</span>].items():
+        <span class="ck">if</span> rel >= 2 <span class="ck">and</span> ag <span class="ck">not in</span> agency_counts:
+            print(f<span class="cs">"WARNING: {ag} (relevance={rel}) has 0 chunks in final set"</span>)
+
+asyncio.run(test())</pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 6 ═══ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <span class="step-badge">STEP 6 OF 7</span>
+    <h2 class="section-title">Structured Context Assembly</h2>
+  </div>
+
+  <div class="sub" id="s6-concept">
+    <div class="sub-title">What this step does and why</div>
+    <p>Your current system dumps all retrieved chunks sequentially into the prompt with no structure. When you have chunks from 4-8 agencies, the LLM has to infer which chunk belongs to which agency — and frequently attributes citations incorrectly.</p>
+    <p>This step groups chunks by agency, orders groups by authority rank, and adds clear section headers. The LLM sees exactly which agency each chunk came from before it starts generating. This is what enables the VERIFY-ADJUDICATE loop to work correctly.</p>
+
+    <div class="example">
+      <div class="example-label">Before — your current context block (flat)</div>
+      <pre style="margin:4px 0 0;font-size:11px">[Source 1] (rcw_chapters, p.3) — "No condition shall be imposed..."
+[Source 2] (spu_design_standards, p.12) — "All new connections must..."
+[Source 3] (washington_court_opinions, p.7) — "The city argued..."
+[Source 4] (smc_chapters, p.4) — "The director may require..."</pre>
+    </div>
+
+    <div class="example">
+      <div class="example-label">After — structured context block (agency-grouped)</div>
+      <pre style="margin:4px 0 0;font-size:11px">=== AGENCY: COURT (Authority Level 1) ===
+[Source 1] COURT — washington_court_opinions, § unknown, p.7
+"The city argued that the nexus test was satisfied..."
+
+=== AGENCY: RCW (Authority Level 2) ===
+[Source 2] RCW — rcw_chapters, RCW 82.02.020, p.3
+"No condition shall be imposed on a development permit..."
+
+=== AGENCY: SMC (Authority Level 6) ===
+[Source 3] SMC — smc_chapters, SMC 23.76.004, p.4
+"The director may require dedication or improvement..."
+
+=== AGENCY: SPU (Authority Level 8) ===
+[Source 4] SPU — spu_design_standards, § unknown, p.12
+"All new connections must meet current design standards..."</pre>
+    </div>
+  </div>
+
+  <div class="sub" id="s6-code">
+    <div class="sub-title">retrieval/context.py — create this file</div>
+
+    <div class="file-label">retrieval/context.py</div>
+    <pre><span class="ck">from</span> config <span class="ck">import</span> AUTHORITY_RANK
+
+<span class="ck">def</span> <span class="cf">assemble_context</span>(chunks: list[dict]) -> str:
+    <span class="cs">"""
+    Groups chunks by agency, orders groups by authority rank,
+    and formats them into the structured context block that gets
+    injected into the system prompt.
+
+    The format is designed for the LLM to:
+      1. Know exactly which agency each chunk came from
+      2. Know the relative authority of each agency
+      3. Have clear section boundaries for the VERIFY-ADJUDICATE loop
+
+    Parameters:
+        chunks : list of chunk dicts from collect_evidence()
+                 Each must have: text, agency, source_file, page
+                 Should have: section_ids (list)
+
+    Returns:
+        str — the formatted context block ready to append to system prompt
+    """</span>
+
+    <span class="cm"># ── GROUP BY AGENCY ───────────────────────────────────────────────────────</span>
+    by_agency: dict[str, list] = {}
+    <span class="ck">for</span> c <span class="ck">in</span> chunks:
+        by_agency.setdefault(c[<span class="cs">"agency"</span>], []).append(c)
+
+    <span class="cm"># ── ORDER AGENCIES BY AUTHORITY RANK (highest authority first) ────────────</span>
+    ordered_agencies = sorted(
+        by_agency.keys(),
+        key=<span class="ck">lambda</span> a: AUTHORITY_RANK.get(a, 99)
+    )
+
+    <span class="cm"># ── BUILD CONTEXT BLOCK ───────────────────────────────────────────────────</span>
+    blocks   = []
+    source_n = 1
+
+    <span class="ck">for</span> agency <span class="ck">in</span> ordered_agencies:
+        rank = AUTHORITY_RANK.get(agency, <span class="cs">"?"</span>)
+        blocks.append(f<span class="cs">"\n=== AGENCY: {agency} (Authority Level {rank}) ==="</span>)
+
+        <span class="ck">for</span> c <span class="ck">in</span> by_agency[agency]:
+            <span class="cm"># Best section ID available — first from list, or fallback</span>
+            sections = c.get(<span class="cs">"section_ids"</span>, [])
+            section  = sections[0] <span class="ck">if</span> sections <span class="ck">else</span> <span class="cs">"§ unknown"</span>
+
+            header = (
+                f<span class="cs">"[Source {source_n}] {agency} — "</span>
+                f<span class="cs">"{c.get('source_file', 'unknown')}, {section}, p.{c.get('page', '?')}"</span>
+            )
+            blocks.append(f<span class="cs">"{header}\n{c['text']}"</span>)
+            source_n += 1
+
+    blocks.append(<span class="cs">"\n=== END OF RETRIEVED CONTEXT ==="</span>)
+    <span class="ck">return</span> <span class="cs">"\n\n"</span>.join(blocks)</pre>
+  </div>
+</section>
+
+<!-- ═══ STEP 7 ═══ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <span class="step-badge">STEP 7 OF 7</span>
+    <h2 class="section-title">Wire Into rag_chain.py</h2>
+  </div>
+
+  <div class="sub" id="s7-concept">
+    <div class="sub-title">What to replace and what to keep</div>
+    <p>Open your existing <code>rag_chain.py</code>. Find the block that does this sequence:</p>
+    <ol class="steps">
+      <li>Calls gpt-4o-mini to classify SIMPLE/COMPLEX</li>
+      <li>Runs regex patterns to pick libraries</li>
+      <li>Calls your embedding function</li>
+      <li>Queries ChromaDB collections in a loop</li>
+      <li>Reranks by cosine similarity</li>
+      <li>Builds the prompt string</li>
+    </ol>
+    <p>Replace all six of those steps with a single async call to <code>build_context()</code>. Everything after — the system prompt prepend, conversation history, gpt-5.1 call, SSE streaming, rate limiting — remains byte-for-byte unchanged.</p>
+
+    <div class="callout crit">
+      <div class="callout-title">Important — async conversion</div>
+      <p>If your existing <code>rag_chain.py</code> query handler is a sync function, you need to call the new async pipeline with <code>asyncio.run()</code>. If it is already async, just use <code>await</code>. Do not mix sync and async without one of these two patterns.</p>
+    </div>
+  </div>
+
+  <div class="sub" id="s7-code">
+    <div class="sub-title">rag_chain.py — the replacement block</div>
+    <p>Add these imports at the top of your existing file:</p>
+    <pre><span class="cm"># Add to top of rag_chain.py</span>
+<span class="ck">import</span> asyncio
+<span class="ck">from</span> retrieval.analyzer <span class="ck">import</span> analyze_query
+<span class="ck">from</span> retrieval.context  <span class="ck">import</span> assemble_context
+<span class="ck">from</span> agents.planner     <span class="ck">import</span> plan_tasks
+<span class="ck">from</span> agents.retriever   <span class="ck">import</span> embed_query, retrieve_all_parallel
+<span class="ck">from</span> agents.collector   <span class="ck">import</span> collect_evidence</pre>
+
+    <p>Then add this function — your new retrieval pipeline as a single callable:</p>
+    <pre><span class="cm"># Add this function to rag_chain.py</span>
+
+<span class="ck">async def</span> <span class="cf">build_context</span>(user_query: str) -> tuple[str, list, dict]:
+    <span class="cs">"""
+    Replaces: gpt-4o-mini classifier + regex router + embed + chroma search
+              + cosine rerank + flat prompt build
+
+    Returns:
+        context_block   : str  — structured context ready to append to prompt
+        final_chunks    : list — chunk dicts (for source metadata in SSE stream)
+        analysis        : dict — mode, agencies, top_k (for logging/debugging)
+    """</span>
+    <span class="cm"># Step 1 — analyze</span>
+    analysis = <span class="ck">await</span> analyze_query(user_query)
+
+    <span class="cm"># Step 2 — plan (synchronous — no await needed)</span>
+    tasks = plan_tasks(user_query, analysis)
+
+    <span class="cm"># Step 3 — embed query once</span>
+    query_vector = <span class="ck">await</span> embed_query(user_query)
+
+    <span class="cm"># Step 4 — retrieve all agencies in parallel</span>
+    agency_results = <span class="ck">await</span> retrieve_all_parallel(tasks, query_vector)
+
+    <span class="cm"># Step 5 — collect, rerank, two-pass select</span>
+    final_chunks = collect_evidence(
+        agency_results,
+        user_query,
+        analysis[<span class="cs">"top_k"</span>],
+        analysis[<span class="cs">"mode"</span>],
+        analysis.get(<span class="cs">"agency_relevance"</span>, {}),
+    )
+
+    <span class="cm"># Step 6 — assemble structured context block</span>
+    context_block = assemble_context(final_chunks)
+
+    <span class="ck">return</span> context_block, final_chunks, analysis</pre>
+
+    <p>Now find your existing query handler and replace the retrieval block. Here is the pattern — adapt the variable names to match yours:</p>
+    <pre><span class="cm"># ─────────────────────────────────────────────────────────────────────────────
+# BEFORE (your existing code — delete this block):
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   complexity  = classify_query(user_query)        # gpt-4o-mini call
+#   top_k       = 24 if complexity == "COMPLEX" else 12
+#   libraries   = route_query(user_query)           # regex patterns
+#   query_vec   = embed(user_query)                 # embedding call
+#   candidates  = []
+#   for lib in libraries:                           # sequential loop
+#       results = chroma_search(lib, query_vec, 25)
+#       candidates.extend(results)
+#   chunks      = rerank_by_cosine(candidates, top_k)
+#   context     = build_flat_context(chunks)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# AFTER (replace with this):
+# ─────────────────────────────────────────────────────────────────────────────
+
+<span class="cm"># If your handler is already async:</span>
+context_block, final_chunks, analysis = <span class="ck">await</span> build_context(user_query)
+
+<span class="cm"># If your handler is sync:</span>
+context_block, final_chunks, analysis = asyncio.run(build_context(user_query))
+
+<span class="cm"># Then build your augmented prompt exactly as before:</span>
+augmented_prompt = DEFAULT_SYSTEM_PROMPT + <span class="cs">"\n\n"</span> + context_block
+
+<span class="cm"># Everything below this line — history trimming, gpt-5.1 call, SSE stream —
+# stays completely unchanged.</span></pre>
+  </div>
+
+  <div class="sub" id="s7-end2end">
+    <div class="sub-title">End-to-end test — all 4 modes</div>
+    <pre><span class="ck">import</span> asyncio
+<span class="ck">from</span> rag_chain <span class="ck">import</span> build_context
+
+<span class="ck">async def</span> <span class="cf">run_all_mode_tests</span>():
+    tests = [
+        (<span class="cs">"A"</span>, <span class="cs">"What does SMC say about ADU height limits in single family zones?"</span>),
+        (<span class="cs">"B"</span>, <span class="cs">"What are the conflicts between DIR rules and IBC-WA on egress width?"</span>),
+        (<span class="cs">"C"</span>, <span class="cs">"What are all the EV charging conflicts I need to know for my apartment building?"</span>),
+        (<span class="cs">"D"</span>, <span class="cs">"I'm building a 6-story mixed-use building in SODO. Audit all my regulatory risks."</span>),
+    ]
+
+    <span class="ck">for</span> expected_mode, query <span class="ck">in</span> tests:
+        ctx, chunks, analysis = <span class="ck">await</span> build_context(query)
+
+        actual_mode = analysis[<span class="cs">"mode"</span>]
+        agencies    = analysis[<span class="cs">"agencies_in_scope"</span>]
+        top_k       = analysis[<span class="cs">"top_k"</span>]
+
+        status = <span class="cs">"OK"</span> <span class="ck">if</span> actual_mode == expected_mode <span class="ck">else</span> <span class="cs">"FAIL"</span>
+        print(f<span class="cs">"[{status}] Mode {actual_mode} | {len(chunks)} chunks | {len(agencies)} agencies | top_k={top_k}"</span>)
+        print(f<span class="cs">"       agencies: {agencies}"</span>)
+        print(f<span class="cs">"       query: {query[:60]}..."</span>)
+        print()
+
+asyncio.run(run_all_mode_tests())</pre>
+
+    <p>Expected output shape:</p>
+    <pre>[OK] Mode A | 12 chunks | 1 agencies | top_k=12
+       agencies: ['SMC']
+
+[OK] Mode B | 16 chunks | 2 agencies | top_k=16
+       agencies: ['DIR', 'IBC_WA']
+
+[OK] Mode C | 24 chunks | 4 agencies | top_k=24
+       agencies: ['WAC', 'SMC', 'IBC_WA', 'SPU']
+
+[OK] Mode D | 40 chunks | 7 agencies | top_k=40
+       agencies: ['RCW', 'WAC', 'SMC', 'DIR', 'SPU', 'IBC_WA', 'COURT']</pre>
+  </div>
+</section>
+
+<!-- ═══ MODES REFERENCE ═══ -->
+<section class="section" id="modes-ref">
+  <div class="section-header">
+    <span class="step-badge">REFERENCE</span>
+    <h2 class="section-title">All 4 Modes — Full Worked Examples</h2>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Mode A — Factual (single agency, fast path)</div>
+    <table>
+      <thead><tr><th>Stage</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Example query</td><td>"What does SMC say about ADU setback requirements?"</td></tr>
+        <tr><td>Agencies</td><td>SMC only (relevance=3)</td></tr>
+        <tr><td>top_k</td><td>12</td></tr>
+        <tr><td>Candidate pool</td><td>36 from SMC only</td></tr>
+        <tr><td>Two-pass</td><td>Skipped — pure reranker result</td></tr>
+        <tr><td>Guaranteed slots</td><td>None — mode A has no floors</td></tr>
+        <tr><td>Context block</td><td>Single agency section: === AGENCY: SMC (Authority Level 6) ===</td></tr>
+        <tr><td>LLM task</td><td>Factual answer with citations — no conflict matrix</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Mode B — Named conflict (2 agencies explicitly named)</div>
+    <table>
+      <thead><tr><th>Stage</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Example query</td><td>"What are the conflicts between DIR rules and IBC on egress width?"</td></tr>
+        <tr><td>Agencies</td><td>DIR (relevance=3), IBC_WA (relevance=3)</td></tr>
+        <tr><td>top_k</td><td>16</td></tr>
+        <tr><td>Candidate pool</td><td>DIR=16 (small corpus, hits ceiling), IBC_WA=16</td></tr>
+        <tr><td>Two-pass pass 1</td><td>DIR=2 slots guaranteed, IBC_WA=2 slots guaranteed</td></tr>
+        <tr><td>Two-pass pass 2</td><td>12 remaining slots — best from either agency</td></tr>
+        <tr><td>Pair check</td><td>DIR × IBC_WA — both guaranteed, always satisfied</td></tr>
+        <tr><td>Context block</td><td>2 sections: IBC_WA (Level 5) then DIR (Level 7)</td></tr>
+        <tr><td>LLM task</td><td>Friction matrix for exactly DIR × IBC_WA pair only</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Mode C — Topic conflict (agencies selected by LLM)</div>
+    <table>
+      <thead><tr><th>Stage</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Example query</td><td>"What EV charging conflicts should I know about for my apartment building?"</td></tr>
+        <tr><td>Agencies</td><td>WAC (3), SMC (3), IBC_WA (2), SPU (2)</td></tr>
+        <tr><td>top_k</td><td>24</td></tr>
+        <tr><td>Candidate pool</td><td>WAC=35 (large corpus × high relevance), SMC=15, IBC_WA=10, SPU=12</td></tr>
+        <tr><td>Two-pass pass 1</td><td>WAC=2, SMC=2, IBC_WA=1, SPU=1 → 6 guaranteed slots</td></tr>
+        <tr><td>Two-pass pass 2</td><td>18 remaining slots — WAC likely fills most on merit</td></tr>
+        <tr><td>Pair check</td><td>WAC×SMC, WAC×IBC_WA, WAC×SPU, SMC×IBC_WA, SMC×SPU, IBC_WA×SPU</td></tr>
+        <tr><td>Context block</td><td>4 sections ordered: IBC_WA (5), SMC (6), DIR (7), SPU (8)</td></tr>
+        <tr><td>LLM task</td><td>Friction matrix for all 6 pairs where both sides have evidence</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub">
+    <div class="sub-title">Mode D — Full audit (all agencies, full conflict matrix)</div>
+    <table>
+      <thead><tr><th>Stage</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Example query</td><td>"I'm building a 6-story mixed-use in SODO. Audit all regulatory risks."</td></tr>
+        <tr><td>Agencies</td><td>All 7-8 relevant agencies, relevance varies</td></tr>
+        <tr><td>top_k</td><td>40</td></tr>
+        <tr><td>Candidate pool</td><td>~120 total — WAC dominates (corpus 3.0 × relevance 3 = 9.0 weight)</td></tr>
+        <tr><td>Two-pass pass 1</td><td>COURT=2 (override), RCW=2, WAC=2, SMC=2, DIR=1, IBC_WA=1, SPU=1 → 11 slots</td></tr>
+        <tr><td>Two-pass pass 2</td><td>29 remaining slots — open merit competition</td></tr>
+        <tr><td>Pair check</td><td>Up to 21 pairs checked — only pairs with evidence on both sides appear in matrix</td></tr>
+        <tr><td>Context block</td><td>7-8 sections, COURT first, SPU last</td></tr>
+        <tr><td>LLM task</td><td>Full friction matrix + developer risk summary + binding precedent section</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ DEBUG ═══ -->
+<section class="section" id="debug">
+  <div class="section-header">
+    <span class="step-badge">REFERENCE</span>
+    <h2 class="section-title">Debugging Checklist</h2>
+  </div>
+
+  <div class="sub">
+    <table>
+      <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>COURT missing from agencies despite legal dispute query</td><td>Trigger words in query not in ANALYZER_PROMPT list</td><td>Add the specific word (e.g. "exaction") to the ALWAYS include COURT section</td></tr>
+        <tr><td>Mode D triggered for a simple factual question</td><td>Prompt ambiguity on Mode D triggers</td><td>Make D triggers more specific — require both a scenario description AND "audit" or "all risks"</td></tr>
+        <tr><td>Agency retriever returns 0 chunks</td><td>Collection name mismatch in COLLECTION_MAP</td><td>Print <code>client.list_collections()</code> and match names exactly</td></tr>
+        <tr><td>Reranker crashes on first run</td><td>Model download failed / no internet</td><td>Pre-download: <code>from sentence_transformers import CrossEncoder; CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")</code></td></tr>
+        <tr><td>Pair coverage check fires frequently</td><td>Candidate budget too low for that agency</td><td>Increase CONFLICT_FLOOR for that agency in planner.py</td></tr>
+        <tr><td>WAC dominates every query</td><td>corpus_weight=3.0 × relevance=3 = 9.0 — largest possible weight</td><td>Lower WAC's corpus_weight to 2.0 or cap its guaranteed slots to 2</td></tr>
+        <tr><td>Slow Mode D queries (&gt;20s)</td><td>Reranker running 120 pairs on CPU</td><td>Pre-filter to top 80 candidates before reranking; or reduce top_k for D to 32</td></tr>
+        <tr><td>json.JSONDecodeError from analyzer</td><td>LLM returned markdown fences around JSON</td><td>Wrap in try/except; strip <code>```json</code> before parsing</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ DEPS ═══ -->
+<section class="section" id="deps">
+  <div class="section-header">
+    <span class="step-badge">REFERENCE</span>
+    <h2 class="section-title">Dependencies</h2>
+  </div>
+
+  <pre><span class="cm"># New package — the only addition</span>
+pip install sentence-transformers
+
+<span class="cm"># Already in your environment (verify versions)</span>
+chromadb>=0.4.0          <span class="cm"># your existing vector DB</span>
+openai>=1.30.0           <span class="cm"># async client (AsyncOpenAI)</span>
+
+<span class="cm"># Standard library — no install needed</span>
+asyncio                  <span class="cm"># parallel retrieval</span>
+itertools                <span class="cm"># combinations() for pair generation</span>
+dataclasses              <span class="cm"># AgencyTask</span>
+json                     <span class="cm"># analyzer output parsing</span></pre>
+
+  <div class="callout ok">
+    <div class="callout-title">Model download note</div>
+    <p>The cross-encoder model (~85 MB) downloads automatically on first import. On AWS Lightsail without internet egress to Hugging Face, pre-download it locally and copy to <code>~/.cache/huggingface/hub/</code> on the server.</p>
+  </div>
+</section>
+
+<div class="footnote">
+  PolicyRAG — Multi-Agent Retrieval Implementation Guide &nbsp;|&nbsp;
+  6 new files &nbsp;|&nbsp; 1 modified &nbsp;|&nbsp; ChromaDB unchanged &nbsp;|&nbsp;
+  4 modes: A / B / C / D
+</div>
+
+</main>
+
+<script>
+const links = document.querySelectorAll('.sb-link');
+const sections = document.querySelectorAll('[id]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.sb-link[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-25% 0px -65% 0px' });
+sections.forEach(s => observer.observe(s));
+links.forEach(l => l.addEventListener('click', e => {
+  e.preventDefault();
+  document.querySelector(l.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+}));
+</script>
+</body>
+</html>
