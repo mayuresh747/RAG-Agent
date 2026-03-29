@@ -8,12 +8,16 @@ from openai import OpenAI
 from src.core.config import (
     OPENAI_API_KEY,
     LLM_MODEL,
+    LLM_FAST,
     LLM_TEMPERATURE,
     LLM_MAX_TOKENS,
     CONVERSATION_MEMORY_SIZE,
     DEFAULT_SYSTEM_PROMPT,
+    USE_MULTI_AGENT,
 )
 from src.core.retriever import retrieve, RetrievalResult
+from src.core.multi_agent import multi_agent_retrieve
+from src.core.context_builder import build_context, build_sources_metadata
 
 
 # ── Lazy client ──────────────────────────────────────────────────────────
@@ -56,7 +60,7 @@ def _is_complex_query(query: str, client: OpenAI) -> bool:
     """Determine if a query is asking for conflicts/comparisons using a fast LLM."""
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=LLM_FAST,
             messages=[
                 {"role": "system", "content": "You are a query classifier. Return 'COMPLEX' if the user is asking for a comparison, conflict, difference, preemption, or inconsistency between rules, agencies, or locations. Otherwise, return 'SIMPLE'."},
                 {"role": "user", "content": query}
@@ -89,38 +93,39 @@ def chat_stream(
     """
     system = system_prompt or DEFAULT_SYSTEM_PROMPT
 
-    # Determine dynamic top_k based on prompt complexity
-    if top_k is None:
-        client = _get_client()
-        is_complex = _is_complex_query(user_message, client)
-        top_k = 24 if is_complex else 12
-
-    # 1) Retrieve relevant context
+    # Retrieve relevant context (multi-agent or legacy path)
     try:
-        retrieval_result = retrieve(
-            query=user_message,
-            top_k=top_k,
-            auto_route=True,
-            min_score=0.25,
-        )
+        if USE_MULTI_AGENT:
+            retrieval_result = multi_agent_retrieve(user_message, min_score=0.1)
+            context_block = build_context(retrieval_result.chunks)
+            sources = build_sources_metadata(retrieval_result.chunks)
+        else:
+            if top_k is None:
+                client = _get_client()
+                is_complex = _is_complex_query(user_message, client)
+                top_k = 24 if is_complex else 12
+            retrieval_result = retrieve(
+                query=user_message,
+                top_k=top_k,
+                auto_route=True,
+                min_score=0.25,
+            )
+            context_block = _build_context_block(retrieval_result)
+            sources = [
+                {
+                    "source_file": c.source_file,
+                    "library": c.library,
+                    "page_number": c.page_number,
+                    "score": round(c.score, 3),
+                    "text": c.text,
+                }
+                for c in retrieval_result.chunks
+            ]
     except Exception as e:
         yield {"type": "error", "data": f"Retrieval error: {e}"}
         return
 
-    # 2) Yield source metadata to the UI (include text for expansion)
-    sources = []
-    for chunk in retrieval_result.chunks:
-        sources.append({
-            "source_file": chunk.source_file,
-            "library": chunk.library,
-            "page_number": chunk.page_number,
-            "score": round(chunk.score, 3),
-            "text": chunk.text,
-        })
     yield {"type": "sources", "data": sources}
-
-    # 3) Build the augmented prompt
-    context_block = _build_context_block(retrieval_result)
 
     augmented_system = (
         f"{system}\n\n"
