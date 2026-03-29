@@ -67,7 +67,7 @@ Nothing in ChromaDB, ingestion, or the frontend changes.
 | `src/core/reranker.py` | `rerank(query, chunks, top_k) → list[RetrievedChunk]`; cross-encoder/ms-marco-MiniLM-L-6-v2, lazy-loaded |
 | `src/core/evidence.py` | `select_evidence(chunks, analysis, top_k) → list[RetrievedChunk]`; two-pass selection + pair coverage check |
 | `src/core/context_builder.py` | `build_context(chunks) → str`; authority-grouped context; `build_sources_metadata(chunks) → list[dict]` for SSE |
-| `src/core/multi_agent.py` | `multi_agent_retrieve(query, min_score) → RetrievalResult`; orchestrates all 6 steps; uses ThreadPoolExecutor for parallel searches |
+| `src/core/multi_agent.py` | `multi_agent_retrieve(query, min_score=0.1) → RetrievalResult`; orchestrates all 6 steps; uses ThreadPoolExecutor for parallel searches |
 
 ---
 
@@ -82,7 +82,9 @@ chat_stream(user_message)
   │     ├── plan_retrieval()          → [AgencyTask(collection, budget, relevance)]
   │     ├── embed_query()             → vector (single call, shared across all agencies)
   │     ├── ThreadPoolExecutor        → parallel vector_search() per AgencyTask
-  │     ├── rerank()                  → sorted RetrievedChunks (cross-encoder)
+  │     │                               ↳ min_score filter applied HERE to cosine similarity (1-distance)
+  │     │                                 before cross-encoder. Default: 0.1 (not 0.25 — see note below)
+  │     ├── rerank()                  → sorted RetrievedChunks (cross-encoder logit scores, NOT cosine)
   │     └── select_evidence()         → final top_k RetrievedChunks
   │   build_context()                 → structured context string
   │   build_sources_metadata()        → sources list for SSE
@@ -109,6 +111,14 @@ budget[agency] = max(CONFLICT_FLOOR[agency], proportion[agency])
 **Conflict floors:** COURT=8, RCW=6, WAC=6, SMC=6, DIR=4, IBC_WA=4, SPU=4, EXEC_ORDER=4
 **Factual floor (Mode A):** 3
 
+### Note: min_score applies to cosine similarity, not cross-encoder scores
+
+`min_score` is a cosine similarity threshold (range 0–1) applied during the parallel retrieval step — before chunks enter the cross-encoder. It filters out candidates with `(1 - chromadb_distance) < min_score`.
+
+**The new pipeline uses `min_score=0.1`, not the legacy `0.25`.** Rationale: the legacy 0.25 floor was designed for a pipeline where cosine similarity was the final ranking signal. In the new pipeline, the cross-encoder handles quality filtering — its job is to rescue high-relevance chunks that cosine search ranks poorly. A 0.25 floor would discard those chunks before the cross-encoder sees them. Lowering to 0.1 keeps near-relevant candidates while still excluding obvious noise.
+
+The cross-encoder (`ms-marco-MiniLM-L-6-v2`) outputs raw logit scores (approximately −10 to +10). These are **never** filtered by `min_score` — they are used only for sorting.
+
 ---
 
 ## Two-Pass Evidence Selection (Evidence Collector)
@@ -123,7 +133,7 @@ budget[agency] = max(CONFLICT_FLOOR[agency], proportion[agency])
 Remaining `top_k − guaranteed` slots filled by globally best unreserved chunks.
 
 **Pair coverage check:**
-For every non-COURT agency pair in scope, both sides must have ≥1 chunk. If missing, force-insert the top-scoring chunk from the missing agency (with a log warning).
+Every agency in `agencies_in_scope` must be represented by ≥1 chunk in the final set. If any agency has zero chunks, force-insert its top-scoring chunk from the reranked pool (with a log warning). COURT is excluded from this check since it is handled by the guaranteed-slots logic in Pass 1. This guarantees that every conflict pair in the friction matrix has evidence on both sides.
 
 ---
 
@@ -155,7 +165,7 @@ Section reference is derived from `source_file` filename:
 ```python
 # Replace lines 92-123 in chat_stream():
 if USE_MULTI_AGENT:
-    retrieval_result = multi_agent_retrieve(user_message, min_score=0.25)
+    retrieval_result = multi_agent_retrieve(user_message, min_score=0.1)
     context_block = build_context(retrieval_result.chunks)
     sources = build_sources_metadata(retrieval_result.chunks)
 else:
@@ -219,10 +229,12 @@ If gpt-4o-mini returns malformed JSON (e.g., markdown fences, partial output):
 - Strip ` ```json ` fences before parsing
 - On `json.JSONDecodeError`: log the raw response, return conservative default:
   ```python
-  AnalysisResult(mode="B", agencies_in_scope=list(COLLECTION_MAP.keys()),
+  AnalysisResult(mode="C", agencies_in_scope=list(COLLECTION_MAP.keys()),
                  agency_relevance={ag: 2 for ag in COLLECTION_MAP},
-                 top_k=20, requires_numerical_comparison=False)
+                 top_k=32, requires_numerical_comparison=False)
   ```
+
+Mode "C" (topic conflict) is the correct fallback — it doesn't assume the user named specific agencies (which Mode "B" implies), covers all 8 agencies with moderate guaranteed slots, and top_k=32 gives ~4 chunks per agency — enough to surface a conflict on either side. Mode "B" with all 8 agencies is semantically inconsistent (B means named agencies) and top_k=20 produces only ~2 slots per agency.
 
 ---
 
@@ -230,12 +242,15 @@ If gpt-4o-mini returns malformed JSON (e.g., markdown fences, partial output):
 
 ### Model pre-bake (Dockerfile)
 
-Add after `pip install` step:
+The Dockerfile switches to `USER appuser` after `pip install`. The pre-bake **must** go after `USER appuser`, not after `pip install`. If run as root, the model caches to `/root/.cache/huggingface/` which `appuser` cannot read at runtime — the model would re-download on first request (and fail on Lightsail with no HuggingFace egress).
+
+Add these two lines **after** the `USER appuser` line:
 ```dockerfile
+# Pre-bake cross-encoder model into /home/appuser/.cache/huggingface/
 RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 ```
 
-This downloads the ~85MB model into the image so AWS Lightsail doesn't need HuggingFace egress at runtime.
+Result: model (~85MB) is owned by appuser, cached at `/home/appuser/.cache/huggingface/hub/`, readable at runtime with no egress needed.
 
 ### FastAPI startup warmup
 
@@ -287,7 +302,7 @@ Steps 3-5 are independent and can proceed in parallel.
 | Risk | Mitigation |
 |------|-----------|
 | Analyzer returns malformed JSON | JSON fence stripping + fallback defaults |
-| Cross-encoder model not downloaded on AWS | Pre-bake in Dockerfile |
+| Cross-encoder model not accessible on AWS (user permissions) | Pre-bake AFTER `USER appuser` in Dockerfile so model lands in `/home/appuser/.cache/` |
 | Cross-encoder cold start (~3-5s) | FastAPI startup warmup |
 | Mode D latency (~5-10s) | Accepted; document for users |
 | ThreadPoolExecutor + ChromaDB contention | Max 8 workers; ChromaDB reads are thread-safe |
