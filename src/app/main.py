@@ -25,8 +25,10 @@ from src.core.config import (
     API_ACCESS_KEY,
     LIBRARIES,
     ALL_DOCUMENTS_DIR,
+    USE_MULTI_AGENT,
 )
 from src.core.rag_chain import chat_stream
+from src.core.reranker import warmup as warmup_reranker
 from src.core.session_logger import log_session
 from src.core.retrieval_logger import log_retrieval
 
@@ -80,6 +82,8 @@ def init_shares_db():
 @app.on_event("startup")
 async def startup():
     init_shares_db()
+    if USE_MULTI_AGENT:
+        warmup_reranker()
 
 
 # ── In-memory state ──────────────────────────────────────────────────────
