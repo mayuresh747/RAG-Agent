@@ -11,6 +11,7 @@ Pipeline (7 steps):
 """
 
 import logging
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from src.core.analyzer import analyze_query
@@ -20,6 +21,7 @@ from src.core.reranker import rerank
 from src.core.evidence import select_evidence
 from src.core.retriever import RetrievedChunk, RetrievalResult
 from src.core.vector_store import search as vector_search
+from src.core.config import COLLECTION_TO_AGENCY
 
 logger = logging.getLogger(__name__)
 
@@ -65,13 +67,27 @@ def multi_agent_retrieve(query: str, min_score: float = 0.1) -> RetrievalResult:
 
     Returns:
         RetrievalResult with chunks sorted by evidence selection priority.
+        audit_trace is always populated for observability.
     """
+    audit: dict = {}
+
     # Step 1: classify query intent
     analysis = analyze_query(query)
     logger.info("Query mode=%s agencies=%s top_k=%d", analysis.mode, analysis.agencies_in_scope, analysis.top_k)
+    audit["analysis"] = {
+        "mode": analysis.mode,
+        "agencies_in_scope": analysis.agencies_in_scope,
+        "agency_relevance": analysis.agency_relevance,
+        "top_k": analysis.top_k,
+        "requires_numerical_comparison": analysis.requires_numerical_comparison,
+    }
 
     # Step 2: compute per-agency budgets
     tasks = plan_retrieval(analysis)
+    audit["budgets"] = [
+        {"agency": t.agency, "collection": t.collection, "budget": t.budget, "relevance": t.relevance}
+        for t in tasks
+    ]
 
     # Step 3: single embedding shared across all agencies
     query_vector = embed_query(query)
@@ -79,7 +95,7 @@ def multi_agent_retrieve(query: str, min_score: float = 0.1) -> RetrievalResult:
     # Step 4: parallel vector search
     # Guard: LLM could hallucinate an empty agencies_in_scope; min(0, 8)=0 → ValueError
     if not tasks:
-        return RetrievalResult(query=query, chunks=[], libraries_searched=[], total_candidates=0)
+        return RetrievalResult(query=query, chunks=[], libraries_searched=[], total_candidates=0, audit_trace=audit)
 
     all_chunks: list = []
     max_workers = min(len(tasks), 8)
@@ -96,16 +112,39 @@ def multi_agent_retrieve(query: str, min_score: float = 0.1) -> RetrievalResult:
                 logger.error("Retrieval failed for %s: %s", task.agency, exc)
 
     logger.info("Fetched %d candidates across %d agencies", len(all_chunks), len(tasks))
+    per_agency_candidates = dict(Counter(
+        COLLECTION_TO_AGENCY.get(c.library, c.library) for c in all_chunks
+    ))
+    audit["candidates"] = {"total": len(all_chunks), "per_agency": per_agency_candidates, "min_score": min_score}
 
     # Step 5: cross-encoder reranking (wider window for evidence selector)
     reranked = rerank(query, all_chunks, top_k=analysis.top_k * 2)
+    audit["reranked"] = {
+        "total": len(reranked),
+        "top_chunks": [
+            {
+                "agency": COLLECTION_TO_AGENCY.get(c.library, c.library),
+                "source_file": c.source_file,
+                "page_number": c.page_number,
+                "cosine_score": round(c.score, 3),
+                "rerank_score": round(c.rerank_score, 3),
+                "text_preview": c.text[:120] + "…" if len(c.text) > 120 else c.text,
+            }
+            for c in reranked[:12]
+        ],
+    }
 
     # Step 6: two-pass evidence selection
     final_chunks = select_evidence(reranked, analysis, top_k=analysis.top_k)
+    final_per_agency = dict(Counter(
+        COLLECTION_TO_AGENCY.get(c.library, c.library) for c in final_chunks
+    ))
+    audit["evidence"] = {"total": len(final_chunks), "per_agency": final_per_agency}
 
     return RetrievalResult(
         query=query,
         chunks=final_chunks,
         libraries_searched=[t.collection for t in tasks],
         total_candidates=len(all_chunks),
+        audit_trace=audit,
     )

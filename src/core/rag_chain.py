@@ -99,6 +99,8 @@ def chat_stream(
             retrieval_result = multi_agent_retrieve(user_message, min_score=0.1)
             context_block = build_context(retrieval_result.chunks)
             sources = build_sources_metadata(retrieval_result.chunks)
+            if retrieval_result.audit_trace:
+                yield {"type": "audit", "data": retrieval_result.audit_trace}
         else:
             if top_k is None:
                 client = _get_client()

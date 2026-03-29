@@ -314,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let fullText = '';
         let usageData = null;
         let streamError = null;
+        let auditTrace = null;
 
         try {
             const response = await fetch('/api/chat', {
@@ -378,6 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (event.data && event.data.length > 0) {
                                 renderSources(sourcesContainer, event.data);
                             }
+                        } else if (event.type === 'audit') {
+                            auditTrace = event.data;
                         } else if (event.type === 'usage') {
                             usageData = event.data;
                         } else if (event.type === 'error') {
@@ -399,6 +402,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add reveal AFTER innerHTML so the animation plays on the actual content
             void bubble.offsetWidth; // force reflow so animation triggers cleanly
             bubble.classList.add('reveal');
+
+            // Render audit trace panel if available
+            if (auditTrace) {
+                const auditContainer = assistantMsg.querySelector('.audit-container');
+                if (auditContainer) renderAuditPanel(auditContainer, auditTrace);
+            }
 
             // Auto-save this session silently after each response
             if (!streamError) autoSave();
@@ -453,11 +462,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         contentDiv.appendChild(bubble);
 
-        // Sources container for assistant messages
+        // Sources + audit containers for assistant messages
         if (role === 'assistant') {
             const sourcesContainer = document.createElement('div');
             sourcesContainer.className = 'sources-container';
             contentDiv.appendChild(sourcesContainer);
+
+            const auditContainer = document.createElement('div');
+            auditContainer.className = 'audit-container';
+            contentDiv.appendChild(auditContainer);
         }
 
         msg.appendChild(avatar);
@@ -801,6 +814,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveToHistory(currentSaveId, data.title || getSessionTitle());
             }
         } catch (_) {}
+    }
+
+    // ── Pipeline Audit Panel ──────────────────────────────────────
+    function renderAuditPanel(container, trace) {
+        if (!trace || !trace.analysis) return;
+
+        const MODE_COLOR  = { A: '#4a90d9', B: '#e8a838', C: '#e87438', D: '#e84848' };
+        const MODE_LABEL  = { A: 'Factual', B: 'Named Conflict', C: 'Topic Conflict', D: 'Full Audit' };
+        const a = trace.analysis;
+        const mode = a.mode || '?';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'audit-panel';
+
+        // ── Toggle button ──────────────────────────────────────────
+        const toggle = document.createElement('button');
+        toggle.className = 'audit-toggle';
+        toggle.innerHTML = `
+            <svg class="audit-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            Pipeline audit
+            <span class="audit-mode-badge" style="background:${MODE_COLOR[mode]||'#666'}">${mode} · ${MODE_LABEL[mode]||mode}</span>
+            <span class="audit-summary">${trace.candidates?.total||0} candidates → ${trace.evidence?.total||0} selected</span>
+        `;
+
+        const body = document.createElement('div');
+        body.className = 'audit-body';
+
+        // ── Step 1: Query Analysis ─────────────────────────────────
+        const relRows = (a.agencies_in_scope || []).map(ag => {
+            const r = a.agency_relevance?.[ag] || 0;
+            return `<tr><td class="audit-td-agency">${ag}</td><td>${'●'.repeat(r)}${'○'.repeat(Math.max(0, 3-r))}</td></tr>`;
+        }).join('');
+
+        // ── Step 2: Budgets ────────────────────────────────────────
+        const maxBudget = Math.max(...(trace.budgets||[]).map(b => b.budget), 1);
+        const budgetRows = (trace.budgets||[]).map(b => {
+            const pct = Math.round(b.budget / maxBudget * 100);
+            return `<tr>
+                <td class="audit-td-agency">${b.agency}</td>
+                <td><div class="audit-bar"><div class="audit-bar-fill" style="width:${pct}%"></div></div></td>
+                <td class="audit-td-num">${b.budget}</td>
+            </tr>`;
+        }).join('');
+
+        // ── Step 3: Candidates ─────────────────────────────────────
+        const cands = trace.candidates || {};
+        const maxCand = Math.max(...Object.values(cands.per_agency||{}), 1);
+        const candRows = Object.entries(cands.per_agency||{}).map(([ag, n]) => {
+            const pct = Math.round(n / maxCand * 100);
+            return `<tr>
+                <td class="audit-td-agency">${ag}</td>
+                <td><div class="audit-bar"><div class="audit-bar-fill audit-bar-cand" style="width:${pct}%"></div></div></td>
+                <td class="audit-td-num">${n}</td>
+            </tr>`;
+        }).join('');
+
+        // ── Step 4: Reranked ───────────────────────────────────────
+        const rr = trace.reranked || {};
+        const rerankedRows = (rr.top_chunks||[]).map((c, i) => `
+            <tr>
+                <td class="audit-td-num" style="color:var(--text-muted)">${i+1}</td>
+                <td><span class="audit-agency-tag">${c.agency}</span></td>
+                <td class="audit-td-source" title="${c.source_file}">${c.source_file.replace(/\.pdf$/i,'').slice(0,22)}</td>
+                <td class="audit-td-num" style="color:#4a90d9">${c.rerank_score.toFixed(2)}</td>
+                <td class="audit-td-num" style="color:var(--text-muted)">${(c.cosine_score*100).toFixed(0)}%</td>
+            </tr>
+            <tr class="audit-preview-row"><td colspan="5" class="audit-preview">${escapeHtml(c.text_preview)}</td></tr>
+        `).join('');
+
+        // ── Step 5: Final Evidence ─────────────────────────────────
+        const ev = trace.evidence || {};
+        const maxEv = Math.max(...Object.values(ev.per_agency||{}), 1);
+        const evRows = Object.entries(ev.per_agency||{}).map(([ag, n]) => {
+            const pct = Math.round(n / maxEv * 100);
+            return `<tr>
+                <td class="audit-td-agency">${ag}</td>
+                <td><div class="audit-bar"><div class="audit-bar-fill audit-bar-ev" style="width:${pct}%"></div></div></td>
+                <td class="audit-td-num">${n}</td>
+            </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <div class="audit-section">
+                <div class="audit-section-title">1 · Query Analysis</div>
+                <div class="audit-kv">top_k <strong>${a.top_k}</strong> &nbsp;·&nbsp; numerical <strong>${a.requires_numerical_comparison ? 'yes' : 'no'}</strong></div>
+                <table class="audit-table"><thead><tr><th>Agency</th><th>Relevance</th></tr></thead><tbody>${relRows}</tbody></table>
+            </div>
+            <div class="audit-section">
+                <div class="audit-section-title">2 · Retrieval Budgets <span class="audit-hint">(cosine candidates to fetch per agency)</span></div>
+                <table class="audit-table"><thead><tr><th>Agency</th><th></th><th>#</th></tr></thead><tbody>${budgetRows}</tbody></table>
+            </div>
+            <div class="audit-section">
+                <div class="audit-section-title">3 · Candidates <span class="audit-hint">${cands.total||0} passed cosine ≥ ${cands.min_score||0.1}</span></div>
+                <table class="audit-table"><thead><tr><th>Agency</th><th></th><th>#</th></tr></thead><tbody>${candRows}</tbody></table>
+            </div>
+            <div class="audit-section">
+                <div class="audit-section-title">4 · Cross-Encoder Reranked <span class="audit-hint">top ${(rr.top_chunks||[]).length} of ${rr.total||0} shown</span></div>
+                <table class="audit-table">
+                    <thead><tr><th>#</th><th>Agency</th><th>Source</th><th>Rerank</th><th>Cos</th></tr></thead>
+                    <tbody>${rerankedRows}</tbody>
+                </table>
+            </div>
+            <div class="audit-section">
+                <div class="audit-section-title">5 · Final Evidence <span class="audit-hint">${ev.total||0} chunks selected (two-pass + coverage)</span></div>
+                <table class="audit-table"><thead><tr><th>Agency</th><th></th><th>#</th></tr></thead><tbody>${evRows}</tbody></table>
+            </div>
+        `;
+
+        toggle.addEventListener('click', () => {
+            const open = body.classList.contains('open');
+            body.classList.toggle('open', !open);
+            toggle.classList.toggle('open', !open);
+        });
+
+        wrap.appendChild(toggle);
+        wrap.appendChild(body);
+        container.appendChild(wrap);
     }
 
     // Final save when user closes/switches tab

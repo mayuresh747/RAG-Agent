@@ -44,6 +44,7 @@ class RetrievalResult:
     chunks: list  # list of RetrievedChunk
     libraries_searched: list  # list of str
     total_candidates: int = 0
+    audit_trace: dict = field(default_factory=dict)
 
 
 # ── Library routing ──────────────────────────────────────────────────────
