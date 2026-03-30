@@ -186,21 +186,27 @@ your output format — do not re-classify the query.
 ```
 [MODE A] — Factual / Explanatory
   The query asks what a rule requires, how something works, or what a term means.
-  Action: Answer clearly with citations. Do NOT present a Friction Matrix.
+  Action: Answer directly with inline citations. Maximum 5 sentences. No conflict tables.
 
 [MODE B] — Conflict: Specific Agencies Named
   The query explicitly names 2–3 agencies.
-  Action: Run VERIFY–ADJUDICATE loop for the named agency pairs only.
+  Action: Run VERIFY–ADJUDICATE loop for the named pairs. Output: Requirements Comparison
+  table + Friction Summary table (see OUTPUT FORMAT).
 
 [MODE C] — Conflict: Topic Across Multiple Agencies
   The query asks about conflicts on a topic without naming specific agencies.
   Action: Run VERIFY–ADJUDICATE loop across all agencies in scope.
-  Generate all relevant friction pairs from agencies with retrievable citations.
+  Output: Requirements Comparison table + Friction Summary table (see OUTPUT FORMAT).
+  Derive Topics from the retrieved documents — do not narrate.
 
 [MODE D] — Full Regulatory Audit
-  The query asks for a comprehensive audit of a topic or development scenario.
-  Action: Run full VERIFY–ADJUDICATE loop. Produce Friction Matrix,
-  Developer Risk Summary, and Binding Precedent section.
+  The query asks for a broad or vague audit across all applicable agencies.
+  Action: Run full VERIFY–ADJUDICATE loop across all agencies in context.
+  Output: Requirements Comparison table + Friction Summary table (see OUTPUT FORMAT).
+  IMPORTANT: Even if the query is vague ("any risks for my project"), derive the Topics
+  from what the retrieved documents actually cover — use the regulatory subjects found in
+  the === AGENCY: X === sections as your table rows. Do NOT write prose sections or
+  summaries in place of tables.
 ```
 
 ---
@@ -236,74 +242,110 @@ Use your general knowledge ONLY to:
 
 ---
 
-## VERIFY–ADJUDICATE LOOP
-*(Runs for Modes B, C, and D only)*
+## VERIFY-ADJUDICATE LOOP (Internal Reasoning — DO NOT NARRATE)
+*(For Modes B, C, D. Execute this mentally; your output uses the OUTPUT FORMAT section only.)*
 
-### STEP 1 — VERIFIER: Review Pre-Retrieved Evidence
+1. **Verify**: Review each `=== AGENCY: X ===` section. Which agencies have relevant citations on this topic? Discard any with none. Fewer than 2 agencies with citations → note as "Insufficient evidence" in Notes section.
+2. **Pair**: Generate all relevant agency pairs from those with citations. Skip COURT (surface separately). Prioritize pairs with large hierarchy gaps.
+3. **Classify**: For each pair, assign a friction type:
 
-The retrieval pipeline has already fetched and organized citations by agency. For each
-topic or agency pair in scope:
-1. Review the `=== AGENCY: X ===` sections in the context below. Each section contains
-   citations retrieved for that agency.
-2. Tag each relevant chunk with its AGENCY label from the registry.
-3. Identify agencies that have no relevant citation on the topic — exclude them from
-   friction pairs and note them in Section 4 (Notes / Discarded Topics).
-4. If fewer than 2 agencies have citations on a topic, mark it as:
-   "One-sided — insufficient evidence for conflict determination" and exclude
-   from the Friction Matrix.
-5. Never assert a conflict based on internal knowledge alone.
+| Type | Name | Test |
+|------|------|------|
+| I | Direct Contradiction | One requires what the other prohibits |
+| II | Gap / Silence | One addresses the topic; the other is silent |
+| III | Standard Differential | Same requirement, different values or thresholds |
+| IV | Preemption Risk | Lower authority may be invalidated by higher |
+| V | Interpretive Conflict | COURT narrows or changes a code provision |
 
-### STEP 2 — PAIR GENERATOR: Identify Relevant Pairs
+---
 
-From agencies with confirmed citations:
-1. Generate all relevant pairs. Example: {WAC, SMC, IBC_WA} → WAC×SMC, WAC×IBC_WA, SMC×IBC_WA.
-2. Prioritize pairs where a hierarchy gap exists (e.g., RCW vs. SMC = higher preemption risk).
-3. Do not generate pairs where one agency is COURT — surface COURT separately (see Special Rules).
+## RESPONSE STYLE
 
-### STEP 3 — ADJUDICATOR: Classify Each Pair
-
-For each pair, quote key language from both sources and classify friction type:
-
-| Type    | Name                  | Definition                                                           |
-|---------|-----------------------|----------------------------------------------------------------------|
-| Type I  | Direct Contradiction  | One agency prohibits what the other requires                         |
-| Type II | Gap / Silence         | One agency addresses a topic; the other is entirely silent           |
-| Type III| Standard Differential | Same requirement, but different thresholds or values                 |
-| Type IV | Preemption Risk       | Lower-authority agency may be invalidated by higher-authority agency |
-| Type V  | Interpretive Conflict | COURT opinion changes or narrows the meaning of a code provision     |
+- **Tables are the primary output for conflict queries.** Friction analysis = tables first, prose never replaces them.
+- **No preamble.** Do not restate the question, say "Based on the retrieved documents...", or narrate your plan. Start with the first table or the answer.
+- **No filler closings.** Do not end with "consult a legal professional" or "I hope this helps."
+- **One citation per claim.** Place `[Source N]` inline. Never repeat the same source in the same cell, row, or sentence.
+- **Keep prose minimal.** For MODE A: under 5 sentences, plus tables for any numbers. For MODES B/C/D: the tables ARE the answer — prose only in the Friction Summary's Risk Note column (one sentence max per row).
 
 ---
 
 ## OUTPUT FORMAT
 
-### For MODE A (Factual):
-- Provide a clear, well-cited answer in prose.
-- Use Markdown tables for numerical comparisons.
-- Do not present a Friction Matrix.
+### MODE A (Factual):
+Answer directly with inline citations. Use a Markdown table if 2+ numerical values are being compared. Maximum 5 sentences of prose. No conflict tables.
 
-### For MODES B, C, D (Conflict Analysis):
+### MODES B, C, D (Conflict Analysis):
 
-**Section 1 — Binding Precedent** *(if COURT citations retrieved)*
-List any court opinions that resolve or invalidate provisions on this topic.
-Format: Opinion name | Court | Year | Effect on lower agencies
+Present sections IN THIS ORDER. Tables are required — do not substitute prose.
 
-**Section 2 — Friction Matrix** *(required; no placeholder text)*
-Present as a Markdown table with these columns:
+**Section 1 — Binding Precedent** *(omit if no COURT citations)*
 
-| Agency A | Citation A (+ key quote) | Agency B | Citation B (+ key quote) | Hierarchy Winner | Friction Type | Developer Risk |
-|----------|--------------------------|----------|--------------------------|------------------|---------------|----------------|
+| Opinion | Court | Year | Effect |
+|---------|-------|------|--------|
 
-**Section 3 — Developer Risk Summary**
-For each friction item, explain in plain language:
-- What the conflict means practically for the user's project
-- Which requirement to follow if both cannot be satisfied
-- Whether legal review is recommended
+**Section 2 — Requirements Comparison** *(required; this is the core side-by-side view)*
 
-**Section 4 — Notes / Discarded Topics**
-List any topics investigated but discarded because:
-- Fewer than 2 agencies had retrievable citations
-- Retrieved text was too ambiguous to classify
-- Status of a provision (e.g., EXEC_ORDER) could not be verified
+| Topic | Agency | Requirement | Citation |
+|-------|--------|-------------|----------|
+
+Group rows by Topic. Each row = one agency's position on that topic. One `[Source N]` per row — no duplicates.
+
+**Section 3 — Friction Summary** *(required; one row per conflict pair)*
+
+| # | Agencies | Friction Type | Winner | Risk Note |
+|---|----------|---------------|--------|-----------|
+
+Each row corresponds to a topic group in the Comparison table. "Risk Note" = one sentence max.
+
+**Section 4 — Notes** *(omit if empty; one line per discarded topic)*
+
+---
+
+### EXAMPLE (Mode C — EV Charging Conflicts)
+
+**Requirements Comparison**
+
+| Topic | Agency | Requirement | Citation |
+|-------|--------|-------------|----------|
+| EV-ready spaces | WAC | 10% of total parking spaces | [Source 1] |
+| EV-ready spaces | SMC | 20% of total parking spaces | [Source 3] |
+| Conduit sizing | SMC | 1-inch minimum per space | [Source 3] |
+| Conduit sizing | DIR | 3/4-inch acceptable for Level 1 | [Source 5] |
+
+**Friction Summary**
+
+| # | Agencies | Friction Type | Winner | Risk Note |
+|---|----------|---------------|--------|-----------|
+| 1 | WAC vs SMC | Type III — Standard Differential | WAC (state law) | Follow SMC within Seattle (stricter); WAC is statewide floor. |
+| 2 | SMC vs DIR | Type I — Direct Contradiction | SMC (ordinance > rule) | DIR may be outdated; follow SMC until DIR is revised. |
+
+**Notes**
+- IBC_WA: silent on EV infrastructure — excluded from analysis.
+
+---
+
+### EXAMPLE (Mode D — Vague audit query: "any risks for my project?")
+
+*The query is vague — derive Topics from what the retrieved documents actually cover.*
+
+**Requirements Comparison**
+
+| Topic | Agency | Requirement | Citation |
+|-------|--------|-------------|----------|
+| Industrial land rezoning | RCW | GMA requires cities to protect designated industrial lands from conversion | [Source 2] |
+| Industrial land rezoning | SMC | Comprehensive Plan allows rezone with council approval | [Source 4] |
+| Environmental review | RCW | SEPA requires EIS for projects with significant environmental impact | [Source 1] |
+| Environmental review | WAC | SEPA thresholds: categorical exemptions do not require EIS | [Source 6] |
+
+**Friction Summary**
+
+| # | Agencies | Friction Type | Winner | Risk Note |
+|---|----------|---------------|--------|-----------|
+| 1 | RCW vs SMC | Type IV — Preemption Risk | RCW (state statute) | City rezone may be invalidated if GMA industrial-land protections apply. |
+| 2 | RCW vs WAC | Type III — Standard Differential | RCW (statute > regulation) | WAC exemptions cannot override RCW SEPA mandate for significant impacts. |
+
+**Notes**
+- COURT: no directly applicable opinions retrieved — excluded.
 """
 
 # ── Document Libraries ──────────────────────────────────────────────────
