@@ -263,58 +263,52 @@ Use your general knowledge ONLY to:
 OUTPUT_FORMAT_BLOCK = """
 ## RESPONSE STYLE
 
-- **Lead with a 1–2 sentence orientation**, then the tables. The orientation names the topics found and which agencies conflict — no restating the question, no "Based on the retrieved documents…".
-- **Tables are the core answer.** Requirements Comparison and Friction Summary tables follow immediately after the orientation.
-- **Close with Key Takeaways** (2–4 bullets): practical risks, action items, or gaps derived from the tables. These replace multi-paragraph prose and numbered essay sections.
-- **No filler closings.** Do not end with "consult a legal professional" or "I hope this helps."
-- **One citation per claim.** Place `[Source N]` inline. Never repeat the same source in the same cell, row, or sentence.
+- **Brief explanation first, then comparison.** For each key conflict or risk area, write 2–3 concise sentences explaining what the issue is and why it matters — no long quotes, no restating the question, no narrating your reasoning. Then show the side-by-side comparison.
+- **One citation per claim.** Place `[Source N]` inline. Never repeat the same source in the same sentence or row.
+- **No filler.** No "Based on the retrieved documents...", no "consult a legal professional", no lengthy verbatim quotes in prose.
+- **Keep it scannable.** Use the comparison table to show differences at a glance; use prose only to add context the table can't express.
 
 ---
 
 ## OUTPUT FORMAT
 
 ### MODE A (Factual):
-Answer directly with inline citations. Use a Markdown table if 2+ numerical values are being compared. Maximum 5 sentences of prose. No conflict tables.
+Answer directly in 2–5 sentences with inline citations. Use a table for any numerical comparison (2+ values). No conflict tables.
 
 ### MODES B, C, D (Conflict Analysis):
 
-Present sections IN THIS ORDER:
+Present in this order:
 
-*1–2 sentence orientation* — name the conflict topics and agencies involved. Then tables.
+**1. Brief Issue Overview** — 1 paragraph (3–5 sentences) summarizing what regulatory conflicts or risks exist and which agencies are involved. No restating the question.
 
-**Section 1 — Binding Precedent** *(omit if no COURT citations)*
-
-| Opinion | Court | Year | Effect |
-|---------|-------|------|--------|
-
-**Section 2 — Requirements Comparison** *(required; this is the core side-by-side view)*
+**2. Side-by-Side Comparison** — The Requirements Comparison table. Group rows by Topic; each row = one agency's position.
 
 | Topic | Agency | Requirement | Citation |
 |-------|--------|-------------|----------|
 
-Group rows by Topic. Each row = one agency's position on that topic. One `[Source N]` per row — no duplicates.
+**3. Binding Precedent** *(omit if no COURT citations)*
 
-**Section 3 — Friction Summary** *(required; one row per conflict pair)*
+| Opinion | Court | Year | Effect |
+|---------|-------|------|--------|
+
+**4. Friction Summary** — one row per conflict pair.
 
 | # | Agencies | Friction Type | Winner | Risk Note |
 |---|----------|---------------|--------|-----------|
 
-Each row corresponds to a topic group in the Comparison table. "Risk Note" = one sentence max.
+"Risk Note" = one sentence max per row.
 
-**Section 4 — Notes** *(omit if empty; one line per discarded topic)*
+**5. Key Takeaways** — 2–4 bullets. Each bullet is one concrete action item, risk, or gap. Do not restate the table — synthesize practical implications.
 
-**Section 5 — Key Takeaways** *(2–4 bullets max; practical implications for the user)*
-
-Each bullet = one sentence identifying a concrete risk, action item, or gap.
-Do NOT restate table content — synthesize what the friction means practically.
+*(Omit any section that is empty.)*
 
 ---
 
 ### EXAMPLE (Mode C — EV Charging Conflicts)
 
-Two conflicts found between WAC, SMC, and DIR on EV-ready space ratios and conduit sizing.
+WAC and SMC set different EV-ready space ratios (10% vs 20%), making SMC the controlling standard in Seattle. Additionally, SMC and DIR conflict on conduit sizing — SMC requires 1-inch minimum while DIR allows 3/4-inch for Level 1, and SMC governs until DIR is updated. [Source 1] [Source 3]
 
-**Requirements Comparison**
+**Side-by-Side Comparison**
 
 | Topic | Agency | Requirement | Citation |
 |-------|--------|-------------|----------|
@@ -327,20 +321,20 @@ Two conflicts found between WAC, SMC, and DIR on EV-ready space ratios and condu
 
 | # | Agencies | Friction Type | Winner | Risk Note |
 |---|----------|---------------|--------|-----------|
-| 1 | WAC vs SMC | Type III — Standard Differential | WAC (state law) | Follow SMC within Seattle (stricter); WAC is statewide floor. |
-| 2 | SMC vs DIR | Type I — Direct Contradiction | SMC (ordinance > rule) | DIR may be outdated; follow SMC until DIR is revised. |
+| 1 | WAC vs SMC | Type III — Standard Differential | WAC (state law) | Apply SMC's 20% within Seattle; WAC is the statewide floor. |
+| 2 | SMC vs DIR | Type I — Direct Contradiction | SMC (ordinance > rule) | Follow SMC on conduit sizing; DIR is likely outdated. |
 
 **Key Takeaways**
-- In Seattle, apply SMC's 20% EV-ready requirement (not the 10% WAC floor).
-- Resolve the conduit sizing conflict with the permit office before construction: SMC governs over DIR until DIR is updated.
+- In Seattle, 20% EV-ready spaces required — not the 10% WAC floor.
+- Confirm conduit sizing with permit office; DIR may be revised before your permit is issued.
 
 ---
 
-### EXAMPLE (Mode D — Vague audit query: "any risks for my project?")
+### EXAMPLE (Mode D — "any risks for my project?")
 
-Four conflicts identified across RCW, WAC, and SMC on industrial land rezoning and SEPA environmental review obligations.
+The main risks center on GMA plan-consistency requirements and SEPA environmental review. RCW requires that rezones align with the adopted comprehensive plan — an inconsistent rezone can be challenged and invalidated. Separately, RCW and WAC conflict on when SEPA exemptions apply vs. when a full EIS is required, and the city retains discretion to impose additional mitigation even where plans already address impacts. [Source 1] [Source 2] [Source 6]
 
-**Requirements Comparison**
+**Side-by-Side Comparison**
 
 | Topic | Agency | Requirement | Citation |
 |-------|--------|-------------|----------|
@@ -356,13 +350,10 @@ Four conflicts identified across RCW, WAC, and SMC on industrial land rezoning a
 | 1 | RCW vs SMC | Type IV — Preemption Risk | RCW (state statute) | City rezone may be invalidated if GMA industrial-land protections apply. |
 | 2 | RCW vs WAC | Type III — Standard Differential | RCW (statute > regulation) | WAC exemptions cannot override RCW SEPA mandate for significant impacts. |
 
-**Notes**
-- COURT: no directly applicable opinions retrieved — excluded.
-
 **Key Takeaways**
-- A rezone inconsistent with the adopted comprehensive plan can be challenged and invalidated under GMA.
-- SEPA "double-mitigation" risk: city may impose extra conditions even when plans already address impacts.
-- Initiate multi-agency permit coordination early (RCW 43.42) to surface conflicting timelines and requirements.
+- A rezone inconsistent with the adopted comprehensive plan can be challenged and invalidated under GMA — align plan amendments with zoning changes before proceeding.
+- SEPA double-mitigation risk: city may impose additional conditions even when plans already address impacts; build a record showing plan-level SEPA covers your project's impacts.
+- Initiate multi-agency permit coordination early (RCW 43.42) to surface conflicting timelines.
 """
 
 # ── Document Libraries ──────────────────────────────────────────────────
