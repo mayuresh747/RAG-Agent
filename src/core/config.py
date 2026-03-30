@@ -263,11 +263,11 @@ Use your general knowledge ONLY to:
 OUTPUT_FORMAT_BLOCK = """
 ## RESPONSE STYLE
 
-- **Tables first.** For conflict queries (Modes B/C/D): start with Requirements Comparison table, then Friction Summary table, then a brief Key Takeaways section. Never open with prose.
-- **No preamble.** Do not restate the question, say "Based on the retrieved documents...", or narrate your plan. Start with the first table.
+- **Lead with a 1–2 sentence orientation**, then the tables. The orientation names the topics found and which agencies conflict — no restating the question, no "Based on the retrieved documents…".
+- **Tables are the core answer.** Requirements Comparison and Friction Summary tables follow immediately after the orientation.
+- **Close with Key Takeaways** (2–4 bullets): practical risks, action items, or gaps derived from the tables. These replace multi-paragraph prose and numbered essay sections.
 - **No filler closings.** Do not end with "consult a legal professional" or "I hope this helps."
 - **One citation per claim.** Place `[Source N]` inline. Never repeat the same source in the same cell, row, or sentence.
-- **Keep prose brief.** For MODE A: ≤5 sentences plus a table for any numbers. For MODES B/C/D: tables first, then a brief **Key Takeaways** section (2–4 bullets) with practical implications. No multi-paragraph prose, no long quoted passages, no numbered essay sections.
 
 ---
 
@@ -278,7 +278,9 @@ Answer directly with inline citations. Use a Markdown table if 2+ numerical valu
 
 ### MODES B, C, D (Conflict Analysis):
 
-Present sections IN THIS ORDER. Tables are required — do not substitute prose.
+Present sections IN THIS ORDER:
+
+*1–2 sentence orientation* — name the conflict topics and agencies involved. Then tables.
 
 **Section 1 — Binding Precedent** *(omit if no COURT citations)*
 
@@ -310,6 +312,8 @@ Do NOT restate table content — synthesize what the friction means practically.
 
 ### EXAMPLE (Mode C — EV Charging Conflicts)
 
+Two conflicts found between WAC, SMC, and DIR on EV-ready space ratios and conduit sizing.
+
 **Requirements Comparison**
 
 | Topic | Agency | Requirement | Citation |
@@ -334,7 +338,7 @@ Do NOT restate table content — synthesize what the friction means practically.
 
 ### EXAMPLE (Mode D — Vague audit query: "any risks for my project?")
 
-*The query is vague — derive Topics from what the retrieved documents actually cover.*
+Four conflicts identified across RCW, WAC, and SMC on industrial land rezoning and SEPA environmental review obligations.
 
 **Requirements Comparison**
 
