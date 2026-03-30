@@ -58,7 +58,7 @@ class TestAnalyzeQuery:
             result = analyze_query("any query")
 
         assert result.mode == "C"
-        assert result.top_k == 32
+        assert result.top_k == 24
         assert len(result.agencies_in_scope) == 8
         assert all(v == 2 for v in result.agency_relevance.values())
 
@@ -69,4 +69,4 @@ class TestAnalyzeQuery:
             result = analyze_query("any query")
 
         assert result.mode == "C"
-        assert result.top_k == 32
+        assert result.top_k == 24

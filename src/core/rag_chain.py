@@ -13,6 +13,7 @@ from src.core.config import (
     LLM_MAX_TOKENS,
     CONVERSATION_MEMORY_SIZE,
     DEFAULT_SYSTEM_PROMPT,
+    OUTPUT_FORMAT_BLOCK,
     USE_MULTI_AGENT,
 )
 from src.core.retriever import retrieve, RetrievalResult
@@ -80,7 +81,6 @@ def chat_stream(
     system_prompt: Optional[str] = None,
     top_k: Optional[int] = None,
     temperature: Optional[float] = None,
-    max_context_chars: int = 10000,
 ) -> Generator[dict, None, None]:
     """
     Stream a RAG-augmented chat response.
@@ -142,12 +142,20 @@ def chat_stream(
                 "pay extra attention to specific values, thresholds, "
                 "and dimensional requirements."
             )
+        # For conflict modes, place the full OUTPUT_FORMAT_BLOCK after the context
+        # so it falls in the LLM's recency window, not buried under legal text.
+        format_block = (
+            OUTPUT_FORMAT_BLOCK
+            if mode in ("B", "C", "D")
+            else "OUTPUT: Answer directly in ≤5 sentences with inline [Source N] citations. No preamble. Use a table if comparing 2+ values."
+        )
         augmented_system = (
             f"{system}\n\n"
             f"{meta_line}{numerical_hint}\n\n"
             f"─── RETRIEVED CONTEXT ───\n\n"
             f"{context_block}\n\n"
-            f"─── END CONTEXT ───"
+            f"─── END CONTEXT ───\n\n"
+            f"{format_block}"
         )
     else:
         augmented_system = (
@@ -155,8 +163,7 @@ def chat_stream(
             f"─── RETRIEVED CONTEXT ───\n\n"
             f"{context_block}\n\n"
             f"─── END CONTEXT ───\n\n"
-            f"Use the above context to answer the user's question. "
-            f"Cite sources by their [Source N] reference."
+            f"{OUTPUT_FORMAT_BLOCK}"
         )
 
     # 4) Build messages list with conversation memory

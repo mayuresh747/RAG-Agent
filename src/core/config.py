@@ -258,14 +258,16 @@ Use your general knowledge ONLY to:
 | V | Interpretive Conflict | COURT narrows or changes a code provision |
 
 ---
+"""
 
+OUTPUT_FORMAT_BLOCK = """
 ## RESPONSE STYLE
 
-- **Tables are the primary output for conflict queries.** Friction analysis = tables first, prose never replaces them.
-- **No preamble.** Do not restate the question, say "Based on the retrieved documents...", or narrate your plan. Start with the first table or the answer.
+- **Tables first.** For conflict queries (Modes B/C/D): start with Requirements Comparison table, then Friction Summary table, then a brief Key Takeaways section. Never open with prose.
+- **No preamble.** Do not restate the question, say "Based on the retrieved documents...", or narrate your plan. Start with the first table.
 - **No filler closings.** Do not end with "consult a legal professional" or "I hope this helps."
 - **One citation per claim.** Place `[Source N]` inline. Never repeat the same source in the same cell, row, or sentence.
-- **Keep prose minimal.** For MODE A: under 5 sentences, plus tables for any numbers. For MODES B/C/D: the tables ARE the answer — prose only in the Friction Summary's Risk Note column (one sentence max per row).
+- **Keep prose brief.** For MODE A: ≤5 sentences plus a table for any numbers. For MODES B/C/D: tables first, then a brief **Key Takeaways** section (2–4 bullets) with practical implications. No multi-paragraph prose, no long quoted passages, no numbered essay sections.
 
 ---
 
@@ -299,6 +301,11 @@ Each row corresponds to a topic group in the Comparison table. "Risk Note" = one
 
 **Section 4 — Notes** *(omit if empty; one line per discarded topic)*
 
+**Section 5 — Key Takeaways** *(2–4 bullets max; practical implications for the user)*
+
+Each bullet = one sentence identifying a concrete risk, action item, or gap.
+Do NOT restate table content — synthesize what the friction means practically.
+
 ---
 
 ### EXAMPLE (Mode C — EV Charging Conflicts)
@@ -319,8 +326,9 @@ Each row corresponds to a topic group in the Comparison table. "Risk Note" = one
 | 1 | WAC vs SMC | Type III — Standard Differential | WAC (state law) | Follow SMC within Seattle (stricter); WAC is statewide floor. |
 | 2 | SMC vs DIR | Type I — Direct Contradiction | SMC (ordinance > rule) | DIR may be outdated; follow SMC until DIR is revised. |
 
-**Notes**
-- IBC_WA: silent on EV infrastructure — excluded from analysis.
+**Key Takeaways**
+- In Seattle, apply SMC's 20% EV-ready requirement (not the 10% WAC floor).
+- Resolve the conduit sizing conflict with the permit office before construction: SMC governs over DIR until DIR is updated.
 
 ---
 
@@ -346,6 +354,11 @@ Each row corresponds to a topic group in the Comparison table. "Risk Note" = one
 
 **Notes**
 - COURT: no directly applicable opinions retrieved — excluded.
+
+**Key Takeaways**
+- A rezone inconsistent with the adopted comprehensive plan can be challenged and invalidated under GMA.
+- SEPA "double-mitigation" risk: city may impose extra conditions even when plans already address impacts.
+- Initiate multi-agency permit coordination early (RCW 43.42) to surface conflicting timelines and requirements.
 """
 
 # ── Document Libraries ──────────────────────────────────────────────────

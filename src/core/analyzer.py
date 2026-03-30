@@ -53,8 +53,8 @@ Omit agencies entirely if they have no plausible connection to the query topic.
 - "mode": one of "A", "B", "C", "D" per the rules above
 - "agencies_in_scope": list of agency labels (only those with relevance >= 1)
 - "agency_relevance": dict mapping each agency in agencies_in_scope to 1, 2, or 3
-- "top_k": integer — use 12 for A, choose 16-20 for B, choose 24-32 for C
-  (higher end if many agencies or complex scenario), 40 for D
+- "top_k": integer — use 12 for A, choose 16-20 for B, choose 20-24 for C/D
+  (higher end if many agencies or complex scenario)
 - "requires_numerical_comparison": true if query asks about specific numeric
   values (fees, setbacks, heights, timelines, capacity limits); false otherwise
 
@@ -108,6 +108,6 @@ def analyze_query(query: str) -> AnalysisResult:
             mode="C",
             agencies_in_scope=all_agencies,
             agency_relevance={ag: 2 for ag in all_agencies},
-            top_k=32,
+            top_k=24,
             requires_numerical_comparison=False,
         )
